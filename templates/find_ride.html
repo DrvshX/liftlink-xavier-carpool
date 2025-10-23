@@ -259,7 +259,7 @@
 
         .ride-header {
             display: flex;
-            justify-content: between;
+            justify-content: space-between;
             align-items: center;
             margin-bottom: 1rem;
         }
@@ -465,7 +465,7 @@
                             </div>
                             <div class="detail-item">
                                 <span class="detail-label">Date & Time</span>
-                                <span class="detail-value">{{ ride.date }} at {{ ride.time }}</span>
+                                <span class="detail-value">{{ ride.date }} at {{ ride.departure_time }}</span>
                             </div>
                             <div class="detail-item">
                                 <span class="detail-label">Available Seats</span>
@@ -473,7 +473,7 @@
                             </div>
                             <div class="detail-item">
                                 <span class="detail-label">Price per Person</span>
-                                <span class="detail-value">₹{{ ride.price_per_person }}</span>
+                                <span class="detail-value">₹{{ ride.price_per_seat }}</span>
                             </div>
                         </div>
                         
