@@ -1,0 +1,609 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Find a Ride - LiftLink : Carpool</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    
+    <!-- Professional Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <style>
+        :root {
+            --bg-primary: #121212;
+            --bg-secondary: #1e1e1e;
+            --bg-tertiary: #2d2d2d;
+            --text-primary: #ffffff;
+            --text-secondary: #b3b3b3;
+            --accent: #667eea;
+            --accent-hover: #5a67d8;
+        }
+        
+        body {
+            background: linear-gradient(135deg, #121212 0%, #1e1e1e 50%, #2d2d2d 100%);
+            color: var(--text-primary);
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            min-height: 100vh;
+            font-weight: 400;
+        }
+        
+        .navbar {
+            background: rgba(30, 30, 30, 0.9) !important;
+            backdrop-filter: blur(20px);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            padding: 1rem 0;
+        }
+        
+        .navbar-logo {
+            width: 60px;
+            height: 60px;
+            border-radius: 12px;
+            margin-right: 15px;
+            object-fit: cover;
+            border: 2px solid rgba(255, 255, 255, 0.2);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+        }
+        
+        .navbar-brand {
+            font-family: 'Poppins', sans-serif !important;
+            font-weight: 600 !important;
+            letter-spacing: -0.5px;
+        }
+        
+        h1, h2, h3, h4, h5, h6 {
+            font-family: 'Poppins', sans-serif;
+            font-weight: 600;
+            letter-spacing: -0.3px;
+        }
+        
+        .nav-button {
+            background-color: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 8px;
+            padding: 8px 16px;
+            margin: 0 5px;
+            color: white !important;
+            text-decoration: none !important;
+            transition: all 0.3s ease;
+            display: inline-block;
+            font-family: 'Inter', sans-serif;
+            font-weight: 500;
+        }
+
+        .nav-button:hover {
+            background-color: rgba(255, 255, 255, 0.2);
+            border-color: rgba(255, 255, 255, 0.3);
+            color: white !important;
+            transform: translateY(-1px);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+        }
+
+        .nav-button.active {
+            background-color: rgba(255, 255, 255, 0.25);
+            border-color: rgba(255, 255, 255, 0.4);
+            font-weight: 600;
+        }
+        
+        .card {
+            background-color: var(--bg-secondary);
+            border: 1px solid var(--bg-tertiary);
+            border-radius: 15px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+            margin-bottom: 20px;
+        }
+        
+        .search-card {
+            background: linear-gradient(135deg, #2d2d2d 0%, #1e1e1e 100%);
+            border: 1px solid var(--accent);
+        }
+        
+        .form-control, .form-select {
+            background-color: var(--bg-tertiary);
+            border: 1px solid var(--bg-tertiary);
+            color: var(--text-primary);
+            border-radius: 10px;
+            font-family: 'Inter', sans-serif;
+        }
+        
+        .form-control:focus, .form-select:focus {
+            background-color: var(--bg-tertiary);
+            border-color: var(--accent);
+            color: var(--text-primary);
+            box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25);
+        }
+        
+        .form-control::placeholder {
+            color: var(--text-secondary);
+        }
+        
+        .form-label {
+            color: var(--text-primary);
+            font-weight: 500;
+            margin-bottom: 8px;
+        }
+        
+        .btn-primary {
+            background: linear-gradient(135deg, var(--accent) 0%, var(--accent-hover) 100%);
+            border: none;
+            border-radius: 10px;
+            font-weight: 500;
+            font-family: 'Inter', sans-serif;
+            padding: 12px 24px;
+        }
+        
+        .btn-success {
+            background: linear-gradient(135deg, #10B981 0%, #059669 100%);
+            border: none;
+            border-radius: 8px;
+            font-weight: 500;
+        }
+        
+        .btn-info {
+            background: linear-gradient(135deg, #0EA5E9 0%, #0284C7 100%);
+            border: none;
+            border-radius: 8px;
+            font-weight: 500;
+            font-size: 12px;
+            padding: 6px 12px;
+        }
+        
+        .ride-card {
+            background: linear-gradient(135deg, #1e1e1e 0%, #2d2d2d 100%);
+            border: 1px solid #3d3d3d;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .ride-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 4px;
+            height: 100%;
+            background: var(--accent);
+        }
+        
+        .driver-avatar {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            background: var(--accent);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+            font-size: 18px;
+        }
+        
+        .rating-stars {
+            color: #FFC107;
+            font-size: 14px;
+        }
+        
+        .price-tag {
+            background: linear-gradient(135deg, var(--accent) 0%, var(--accent-hover) 100%);
+            color: white;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-weight: 600;
+            text-align: center;
+        }
+        
+        .seats-available {
+            background: rgba(16, 185, 129, 0.2);
+            color: #10B981;
+            padding: 4px 12px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 500;
+        }
+        
+        .location-badge {
+            background: rgba(102, 126, 234, 0.2);
+            color: var(--accent);
+            padding: 4px 12px;
+            border-radius: 8px;
+            font-size: 12px;
+            font-weight: 500;
+        }
+        
+        .gradient-text {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            font-weight: bold;
+        }
+        
+        .alert-success {
+            background-color: rgba(40, 167, 69, 0.2);
+            border-color: rgba(40, 167, 69, 0.3);
+            color: #28a745;
+        }
+        
+        .alert-danger {
+            background-color: rgba(220, 53, 69, 0.2);
+            border-color: rgba(220, 53, 69, 0.3);
+            color: #dc3545;
+        }
+        
+        /* Route Display Styling */
+        .route-container {
+            background: linear-gradient(135deg, #2d2d2d 0%, #1e1e1e 100%);
+            border: 1px solid var(--accent);
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+        
+        .route-simple {
+            background: rgba(102, 126, 234, 0.1);
+            border: 1px solid rgba(102, 126, 234, 0.3);
+            border-radius: 15px;
+            padding: 20px;
+            text-align: center;
+        }
+        
+        .route-features {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-top: 20px;
+        }
+        
+        .feature-item {
+            background: rgba(45, 45, 45, 0.5);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+            padding: 15px;
+            text-align: center;
+            transition: all 0.3s ease;
+        }
+        
+        .feature-item:hover {
+            transform: translateY(-2px);
+            border-color: var(--accent);
+        }
+        
+        .feature-icon {
+            font-size: 2rem;
+            margin-bottom: 8px;
+            display: block;
+        }
+        
+        .feature-title {
+            font-weight: 600;
+            color: var(--accent);
+            margin-bottom: 5px;
+        }
+        
+        .feature-desc {
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+        }
+    </style>
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg navbar-dark">
+        <div class="container">
+            <a class="navbar-brand d-flex align-items-center" href="/dashboard" style="font-size: 1.8rem;">
+                <img src="/static/images/xie_logo.jpg" alt="XIE Logo" class="navbar-logo">
+                LiftLink : Carpool
+            </a>
+            <div class="navbar-nav ms-auto d-flex flex-row">
+                <a class="nav-button" href="/dashboard">📊 Dashboard</a>
+                <a class="nav-button" href="/profile">👤 Profile</a>
+                <a class="nav-button" href="/logout">🚪 Logout</a>
+            </div>
+        </div>
+    </nav>
+    
+    <div class="container mt-4">
+        <!-- Flash messages -->
+        {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+        {% for category, message in messages %}
+        <div class="alert alert-{{ 'danger' if category == 'error' else category }} alert-dismissible fade show" role="alert">
+            {{ message }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+        {% endfor %}
+        {% endif %}
+        {% endwith %}
+        
+        <!-- Page Header -->
+        <div class="text-center mb-4">
+            <h1>🔍 Find a <span class="gradient-text">Ride</span></h1>
+            <p class="lead">Discover available rides from fellow Xavier students</p>
+        </div>
+        
+        <!-- Search Form -->
+        <div class="card search-card mb-4">
+            <div class="card-body p-4">
+                <h5 class="card-title mb-3">🎯 Search for Rides</h5>
+                <form method="POST" action="/search_rides" id="searchForm">
+                    <div class="row">
+                        <div class="col-md-3 mb-3">
+                            <label for="from_location" class="form-label">From Location</label>
+                            <input type="text" class="form-control" id="from_location" name="from_location" 
+                                   placeholder="Vashi Station, Nerul..." 
+                                   value="{{ from_location if from_location else '' }}" required>
+                        </div>
+                        <div class="col-md-3 mb-3">
+                            <label for="to_location" class="form-label">To Location</label>
+                            <input type="text" class="form-control" id="to_location" name="to_location" 
+                                   placeholder="Xavier Institute..." 
+                                   value="{{ to_location if to_location else '' }}" required>
+                        </div>
+                        <div class="col-md-2 mb-3">
+                            <label for="ride_date" class="form-label">Date</label>
+                            <input type="date" class="form-control" id="ride_date" name="ride_date" 
+                                   value="{{ ride_date if ride_date else '' }}" required>
+                        </div>
+                        <div class="col-md-2 mb-3">
+                            <label for="ride_time" class="form-label">Preferred Time</label>
+                            <select class="form-select" id="ride_time" name="ride_time">
+                                <option value="">Any Time</option>
+                                <option value="morning">Morning (6-10 AM)</option>
+                                <option value="afternoon">Afternoon (12-4 PM)</option>
+                                <option value="evening">Evening (4-8 PM)</option>
+                            </select>
+                        </div>
+                        <div class="col-md-2 mb-3 d-flex align-items-end">
+                            <button type="submit" class="btn btn-primary w-100">
+                                🔍 Search Rides
+                            </button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+        
+        <!-- Route Display (Shows when search is performed) -->
+        {% if search_performed and from_location and to_location %}
+        <div class="route-container">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h5>🗺️ Route: {{ from_location }} → {{ to_location }}</h5>
+                <a href="https://maps.google.com/dir/{{ from_location }}, Maharashtra/{{ to_location }}, Maharashtra" 
+                   target="_blank" class="btn btn-primary">
+                    🌐 View Route on Google Maps
+                </a>
+            </div>
+            
+            <div class="route-simple">
+                <h6 style="color: var(--accent); margin-bottom: 15px;">📍 Route Information</h6>
+                <p class="text-muted mb-3">
+                    Searching for rides from <strong>{{ from_location }}</strong> to <strong>{{ to_location }}</strong>
+                </p>
+                <p class="text-muted" style="font-size: 0.9rem;">
+                    Click the button above to view detailed directions and real-time traffic on Google Maps.
+                </p>
+            </div>
+            
+            <div class="route-features">
+                <div class="feature-item">
+                    <span class="feature-icon">🚗</span>
+                    <div class="feature-title">Carpool Benefits</div>
+                    <div class="feature-desc">Share costs & reduce carbon footprint</div>
+                </div>
+                <div class="feature-item">
+                    <span class="feature-icon">💰</span>
+                    <div class="feature-title">Save Money</div>
+                    <div class="feature-desc">Split fuel & toll costs with others</div>
+                </div>
+                <div class="feature-item">
+                    <span class="feature-icon">🤝</span>
+                    <div class="feature-title">Meet Students</div>
+                    <div class="feature-desc">Connect with fellow Xavier students</div>
+                </div>
+                <div class="feature-item">
+                    <span class="feature-icon">🌍</span>
+                    <div class="feature-title">Go Green</div>
+                    <div class="feature-desc">Reduce traffic & pollution together</div>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+        
+        <!-- Search Results -->
+        {% if search_performed %}
+        <div class="mb-4">
+            <h4>🚗 Available Rides</h4>
+            {% if rides %}
+            <p class="text-muted">Found {{ rides|length }} ride(s) matching your search</p>
+            {% else %}
+            <p class="text-muted">No rides found matching your criteria</p>
+            {% endif %}
+        </div>
+
+        {% if rides %}
+        <div class="row">
+            {% for ride in rides %}
+            <div class="col-md-6 mb-4">
+                <div class="card ride-card">
+                    <div class="card-body p-4">
+                        <!-- Driver Info -->
+                        <div class="d-flex align-items-center mb-3">
+                            <div class="driver-avatar me-3">
+                                {{ ride.driver_name[0] }}
+                            </div>
+                            <div class="flex-grow-1">
+                                <h6 class="mb-1">{{ ride.driver_name }}</h6>
+                                <small class="text-muted">{{ ride.department }} • {{ ride.year }}</small>
+                                <div class="rating-stars">
+                                    {% for i in range(5) %}
+                                        {% if i < ride.rating %}⭐{% else %}☆{% endif %}
+                                    {% endfor %}
+                                    <span class="ms-1">({{ ride.rating }})</span>
+                                </div>
+                            </div>
+                            <div class="price-tag">
+                                ₹{{ ride.price_per_seat }}
+                            </div>
+                        </div>
+                        
+                        <!-- Route Info -->
+                        <div class="mb-3">
+                            <div class="d-flex align-items-center mb-2">
+                                <span class="location-badge me-2">From</span>
+                                <strong>{{ ride.from_location }}</strong>
+                            </div>
+                            <div class="d-flex align-items-center mb-2">
+                                <span class="location-badge me-2">To</span>
+                                <strong>{{ ride.to_location }}</strong>
+                            </div>
+                        </div>
+                        
+                        <!-- Trip Details -->
+                        <div class="row text-center mb-3">
+                            <div class="col-4">
+                                <small class="text-muted d-block">Departure</small>
+                                <strong>{{ ride.departure_time }}</strong>
+                            </div>
+                            <div class="col-4">
+                                <small class="text-muted d-block">Date</small>
+                                <strong>{{ ride.date }}</strong>
+                            </div>
+                            <div class="col-4">
+                                <small class="text-muted d-block">Vehicle</small>
+                                <strong>{{ ride.car_model }}</strong>
+                            </div>
+                        </div>
+                        
+                        <!-- Additional Info -->
+                        {% if ride.additional_info %}
+                        <div class="mb-3">
+                            <small class="text-muted d-block">Additional Info</small>
+                            <small>{{ ride.additional_info }}</small>
+                        </div>
+                        {% endif %}
+                        
+                        <!-- Seats & Actions -->
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div class="seats-available">
+                                {{ ride.available_seats }} seats available
+                            </div>
+                            <div class="d-flex gap-2">
+                                <button class="btn btn-info btn-sm" onclick="showRideRoute('{{ ride.from_location }}', '{{ ride.to_location }}', '{{ ride.driver_name }}')">
+                                    🗺️ View Route
+                                </button>
+                                <a href="tel:{{ ride.phone }}" class="btn btn-success btn-sm">
+                                    📞 Call Driver
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <div class="text-center py-5">
+            <h4>🚫 No Rides Found</h4>
+            <p>Try adjusting your search criteria or check back later.</p>
+            <a href="/create_ride" class="btn btn-primary mt-3">
+                ➕ Offer Your Own Ride
+            </a>
+        </div>
+        {% endif %}
+        
+        {% else %}
+        <!-- Initial state - before search -->
+        <div class="text-center py-5">
+            <div class="mb-4">
+                <h4>🔍 Start Your Search</h4>
+                <p class="text-muted">Use the search form above to find rides and view routes on Google Maps.</p>
+            </div>
+            
+            <div class="row justify-content-center">
+                <div class="col-md-8">
+                    <div class="card">
+                        <div class="card-body p-4">
+                            <h6 class="mb-3">💡 Popular Routes</h6>
+                            <div class="row text-center">
+                                <div class="col-md-4 mb-3">
+                                    <div class="location-badge">Vashi Station → XIE</div>
+                                    <small class="d-block text-muted mt-1">Morning rides available</small>
+                                </div>
+                                <div class="col-md-4 mb-3">
+                                    <div class="location-badge">Nerul Station → XIE</div>
+                                    <small class="d-block text-muted mt-1">Regular commuters</small>
+                                </div>
+                                <div class="col-md-4 mb-3">
+                                    <div class="location-badge">Titwala → XIE</div>
+                                    <small class="d-block text-muted mt-1">Long distance routes</small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+    
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <script>
+        // Show ride route on Google Maps (opens in new tab)
+        function showRideRoute(from, to, driverName) {
+            const url = `https://maps.google.com/dir/${encodeURIComponent(from)}, Maharashtra/${encodeURIComponent(to)}, Maharashtra`;
+            window.open(url, '_blank');
+        }
+        
+        // Form validation and enhancements
+        document.addEventListener('DOMContentLoaded', function() {
+            // Set minimum date to today
+            const dateInput = document.getElementById('ride_date');
+            if (dateInput) {
+                dateInput.min = new Date().toISOString().split('T')[0];
+            }
+            
+            // Form validation
+            const form = document.getElementById('searchForm');
+            if (form) {
+                form.addEventListener('submit', function(e) {
+                    const from = document.getElementById('from_location').value.trim();
+                    const to = document.getElementById('to_location').value.trim();
+                    
+                    if (from.toLowerCase() === to.toLowerCase()) {
+                        e.preventDefault();
+                        alert('From and To locations cannot be the same!');
+                        return false;
+                    }
+                });
+            }
+            
+            // Add smooth animations
+            const cards = document.querySelectorAll('.card, .route-container');
+            cards.forEach((card, index) => {
+                card.style.opacity = '0';
+                card.style.transform = 'translateY(20px)';
+                
+                setTimeout(() => {
+                    card.style.transition = 'all 0.5s ease';
+                    card.style.opacity = '1';
+                    card.style.transform = 'translateY(0)';
+                }, index * 100);
+            });
+            
+            // Feature items hover effect
+            const featureItems = document.querySelectorAll('.feature-item');
+            featureItems.forEach(item => {
+                item.addEventListener('mouseenter', function() {
+                    this.style.transform = 'translateY(-5px)';
+                });
+                
+                item.addEventListener('mouseleave', function() {
+                    this.style.transform = 'translateY(0)';
+                });
+            });
+        });
+    </script>
+</body>
+</html>

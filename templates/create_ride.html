@@ -1,0 +1,360 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Create Ride - LiftLink : Carpool</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    
+    <!-- Professional Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <style>
+        :root {
+            --bg-primary: #121212;
+            --bg-secondary: #1e1e1e;
+            --bg-tertiary: #2d2d2d;
+            --text-primary: #ffffff;
+            --text-secondary: #b3b3b3;
+            --accent: #667eea;
+            --accent-hover: #5a67d8;
+        }
+        
+        body {
+            background: linear-gradient(135deg, #121212 0%, #1e1e1e 50%, #2d2d2d 100%);
+            color: var(--text-primary);
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            min-height: 100vh;
+            font-weight: 400;
+        }
+        
+        .navbar {
+            background: rgba(30, 30, 30, 0.9) !important;
+            backdrop-filter: blur(20px);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            padding: 1rem 0;
+        }
+        
+        .navbar-logo {
+            width: 50px;
+            height: 50px;
+            border-radius: 12px;
+            margin-right: 15px;
+            object-fit: cover;
+            border: 2px solid rgba(255, 255, 255, 0.2);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+        }
+        
+        .navbar-brand {
+            font-family: 'Poppins', sans-serif !important;
+            font-weight: 600 !important;
+            letter-spacing: -0.5px;
+            color: var(--text-primary) !important;
+        }
+        
+        h1, h2, h3, h4, h5, h6 {
+            font-family: 'Poppins', sans-serif;
+            font-weight: 600;
+            letter-spacing: -0.3px;
+        }
+        
+        .nav-button {
+            background-color: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 8px;
+            padding: 8px 16px;
+            margin: 0 5px;
+            color: white !important;
+            text-decoration: none !important;
+            transition: all 0.3s ease;
+            display: inline-block;
+            font-family: 'Inter', sans-serif;
+            font-weight: 500;
+        }
+
+        .nav-button:hover {
+            background-color: rgba(255, 255, 255, 0.2);
+            border-color: rgba(255, 255, 255, 0.3);
+            color: white !important;
+            transform: translateY(-1px);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+        }
+        
+        .card {
+            background-color: var(--bg-secondary);
+            border: 1px solid var(--bg-tertiary);
+            border-radius: 15px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+            margin-bottom: 20px;
+        }
+        
+        .tips-card {
+            background: linear-gradient(135deg, #2d2d2d 0%, #1e1e1e 100%);
+            border: 1px solid var(--accent);
+        }
+        
+        .form-control, .form-select {
+            background-color: var(--bg-tertiary);
+            border: 1px solid var(--bg-tertiary);
+            color: var(--text-primary);
+            border-radius: 10px;
+            font-family: 'Inter', sans-serif;
+        }
+        
+        .form-control:focus, .form-select:focus {
+            background-color: var(--bg-tertiary);
+            border-color: var(--accent);
+            color: var(--text-primary);
+            box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25);
+        }
+        
+        .form-control::placeholder {
+            color: var(--text-secondary);
+        }
+        
+        .form-label {
+            color: var(--text-primary);
+            font-weight: 500;
+            margin-bottom: 8px;
+        }
+        
+        .btn-primary {
+            background: linear-gradient(135deg, var(--accent) 0%, var(--accent-hover) 100%);
+            border: none;
+            border-radius: 10px;
+            font-weight: 500;
+            font-family: 'Inter', sans-serif;
+            padding: 12px 24px;
+        }
+        
+        .btn-secondary {
+            background: rgba(108, 117, 125, 0.2);
+            border: 1px solid rgba(108, 117, 125, 0.3);
+            color: var(--text-secondary);
+            border-radius: 10px;
+            font-weight: 500;
+            font-family: 'Inter', sans-serif;
+            padding: 12px 24px;
+            text-decoration: none;
+        }
+        
+        .btn-secondary:hover {
+            background: rgba(108, 117, 125, 0.3);
+            color: var(--text-primary);
+        }
+        
+        .gradient-text {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            font-weight: bold;
+        }
+        
+        .section-icon {
+            color: var(--accent);
+            margin-right: 8px;
+        }
+        
+        .alert-success {
+            background-color: rgba(40, 167, 69, 0.2);
+            border-color: rgba(40, 167, 69, 0.3);
+            color: #28a745;
+        }
+        
+        .alert-danger {
+            background-color: rgba(220, 53, 69, 0.2);
+            border-color: rgba(220, 53, 69, 0.3);
+            color: #dc3545;
+        }
+        
+        .input-group-text {
+            background-color: var(--bg-tertiary);
+            border-color: var(--bg-tertiary);
+            color: var(--text-primary);
+        }
+    </style>
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg navbar-dark">
+        <div class="container">
+            <a class="navbar-brand d-flex align-items-center" href="/dashboard" style="font-size: 1.8rem;">
+                <img src="/static/images/xie_logo.png" alt="XIE Logo" class="navbar-logo">
+                LiftLink : Carpool
+            </a>
+            <div class="navbar-nav ms-auto d-flex flex-row">
+                <a class="nav-button" href="/dashboard">📊 Dashboard</a>
+                <a class="nav-button" href="/profile">👤 Profile</a>
+                <a class="nav-button" href="/logout">🚪 Logout</a>
+            </div>
+        </div>
+    </nav>
+    
+    <div class="container mt-4">
+        <!-- Flash messages -->
+        {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+        {% for category, message in messages %}
+        <div class="alert alert-{{ 'danger' if category == 'error' else category }} alert-dismissible fade show" role="alert">
+            {{ message }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+        {% endfor %}
+        {% endif %}
+        {% endwith %}
+        
+        <!-- Page Header -->
+        <div class="text-center mb-4">
+            <h1>➕ Create New <span class="gradient-text">Ride</span></h1>
+            <p class="lead">Share your ride with fellow Xavier students</p>
+        </div>
+        
+        <!-- Tips Card -->
+        <div class="card tips-card mb-4">
+            <div class="card-body p-4">
+                <h5 class="card-title mb-3"><span class="section-icon">💡</span>Tips for Creating a Great Ride</h5>
+                <ul class="mb-0">
+                    <li>Be specific about pickup and drop-off locations</li>
+                    <li>Set fair pricing considering fuel costs</li>
+                    <li>Provide accurate departure time</li>
+                    <li>Be clear about any specific requirements</li>
+                </ul>
+            </div>
+        </div>
+        
+        <!-- Create Ride Form -->
+        <div class="row justify-content-center">
+            <div class="col-lg-8">
+                <div class="card">
+                    <div class="card-body p-4">
+                        <form method="POST" action="/create_ride">
+                            <!-- Route Information -->
+                            <h5 class="mb-3"><span class="section-icon">🗺️</span>Route Information</h5>
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label for="from_location" class="form-label">From Location <span class="text-danger">*</span></label>
+                                    <input type="text" class="form-control" id="from_location" name="from_location" 
+                                           placeholder="e.g., Vashi Station, Nerul Station..." required>
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label for="to_location" class="form-label">To Location <span class="text-danger">*</span></label>
+                                    <input type="text" class="form-control" id="to_location" name="to_location" 
+                                           placeholder="e.g., Xavier Institute..." required>
+                                </div>
+                            </div>
+                            
+                            <!-- Schedule Information -->
+                            <h5 class="mb-3 mt-4"><span class="section-icon">🕐</span>Schedule Information</h5>
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label for="departure_date" class="form-label">Departure Date <span class="text-danger">*</span></label>
+                                    <input type="date" class="form-control" id="departure_date" name="departure_date" required>
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label for="departure_time" class="form-label">Departure Time <span class="text-danger">*</span></label>
+                                    <input type="time" class="form-control" id="departure_time" name="departure_time" required>
+                                </div>
+                            </div>
+                            
+                            <!-- Ride Details -->
+                            <h5 class="mb-3 mt-4"><span class="section-icon">🚗</span>Ride Details</h5>
+                            <div class="row">
+                                <div class="col-md-4 mb-3">
+                                    <label for="available_seats" class="form-label">Available Seats <span class="text-danger">*</span></label>
+                                    <select class="form-select" id="available_seats" name="available_seats" required>
+                                        <option value="">Select Seats</option>
+                                        <option value="1">1 Seat</option>
+                                        <option value="2">2 Seats</option>
+                                        <option value="3">3 Seats</option>
+                                        <option value="4">4 Seats</option>
+                                        <option value="5">5 Seats</option>
+                                        <option value="6">6 Seats</option>
+                                        <option value="7">7 Seats</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-4 mb-3">
+                                    <label for="price_per_seat" class="form-label">Price per Seat (₹)</label>
+                                    <div class="input-group">
+                                        <span class="input-group-text">₹</span>
+                                        <input type="number" class="form-control" id="price_per_seat" name="price_per_seat" 
+                                               placeholder="25" min="0" step="5">
+                                    </div>
+                                </div>
+                                <div class="col-md-4 mb-3">
+                                    <label for="car_model" class="form-label">Car Model (Optional)</label>
+                                    <input type="text" class="form-control" id="car_model" name="car_model" 
+                                           placeholder="e.g., Honda City, Maruti Swift...">
+                                </div>
+                            </div>
+                            
+                            <!-- Additional Information -->
+                            <div class="mb-4">
+                                <label for="additional_info" class="form-label">Additional Information (Optional)</label>
+                                <textarea class="form-control" id="additional_info" name="additional_info" rows="3" 
+                                          placeholder="AC available, music system, pickup preferences, etc."></textarea>
+                            </div>
+                            
+                            <!-- Submit Buttons -->
+                            <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                                <a href="/dashboard" class="btn btn-secondary me-md-2">
+                                    ← Back to Dashboard
+                                </a>
+                                <button type="submit" class="btn btn-primary">
+                                    🚗 Create Ride
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Set minimum date to today
+            const dateInput = document.getElementById('departure_date');
+            if (dateInput) {
+                dateInput.min = new Date().toISOString().split('T')[0];
+            }
+            
+            // Form validation
+            const form = document.querySelector('form');
+            form.addEventListener('submit', function(e) {
+                const from = document.getElementById('from_location').value.trim();
+                const to = document.getElementById('to_location').value.trim();
+                
+                if (from.toLowerCase() === to.toLowerCase()) {
+                    e.preventDefault();
+                    alert('From and To locations cannot be the same!');
+                    return false;
+                }
+                
+                const seats = document.getElementById('available_seats').value;
+                if (!seats) {
+                    e.preventDefault();
+                    alert('Please select the number of available seats.');
+                    return false;
+                }
+            });
+            
+            // Add animations
+            const cards = document.querySelectorAll('.card');
+            cards.forEach((card, index) => {
+                card.style.opacity = '0';
+                card.style.transform = 'translateY(20px)';
+                
+                setTimeout(() => {
+                    card.style.transition = 'all 0.5s ease';
+                    card.style.opacity = '1';
+                    card.style.transform = 'translateY(0)';
+                }, index * 200);
+            });
+        });
+    </script>
+</body>
+</html>

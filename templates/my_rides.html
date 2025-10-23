@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Rides - LiftLink : Carpool</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Same CSS as create_ride.html -->
+    <style>
+        /* Copy the same CSS from create_ride.html */
+        :root {
+            --bg-primary: #121212;
+            --bg-secondary: #1e1e1e;
+            --bg-tertiary: #2d2d2d;
+            --text-primary: #ffffff;
+            --text-secondary: #b3b3b3;
+            --accent: #667eea;
+            --accent-hover: #5a67d8;
+        }
+        
+        body {
+            background-color: var(--bg-primary);
+            color: var(--text-primary);
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            min-height: 100vh;
+            font-weight: 400;
+        }
+        
+        .navbar {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+        }
+        
+        .navbar-logo {
+            width: 60px;
+            height: 60px;
+            border-radius: 12px;
+            margin-right: 15px;
+            object-fit: contain;
+            background: rgba(255, 255, 255, 0.1);
+            padding: 3px;
+        }
+        
+        .ride-card {
+            background: linear-gradient(135deg, #1e1e1e 0%, #2d2d2d 100%);
+            border: 1px solid #3d3d3d;
+            border-radius: 15px;
+            margin-bottom: 20px;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .ride-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 4px;
+            height: 100%;
+            background: var(--accent);
+        }
+        
+        .gradient-text {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            font-weight: bold;
+        }
+        
+        .status-badge {
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+        
+        .status-active {
+            background: rgba(40, 167, 69, 0.2);
+            color: #28a745;
+        }
+        
+        .btn-outline-danger {
+            border-color: #dc3545;
+            color: #dc3545;
+        }
+        
+        .btn-outline-danger:hover {
+            background-color: #dc3545;
+            border-color: #dc3545;
+        }
+    </style>
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg navbar-dark">
+        <div class="container">
+            <a class="navbar-brand d-flex align-items-center" href="/dashboard" style="font-size: 1.8rem;">
+                <img src="/static/images/xie_logo.png" alt="XIE Logo" class="navbar-logo">
+                LiftLink : Carpool
+            </a>
+            <div class="navbar-nav ms-auto d-flex flex-row">
+                <a class="nav-button" href="/dashboard">📊 Dashboard</a>
+                <a class="nav-button" href="/profile">👤 Profile</a>
+                <a class="nav-button" href="/logout">🚪 Logout</a>
+            </div>
+        </div>
+    </nav>
+    
+    <div class="container mt-4">
+        <div class="text-center mb-4">
+            <h1>🚗 My <span class="gradient-text">Rides</span></h1>
+            <p class="lead">Rides you've created</p>
+        </div>
+        
+        {% if rides %}
+        <div class="row">
+            {% for ride in rides %}
+            <div class="col-md-6 mb-4">
+                <div class="card ride-card">
+                    <div class="card-body p-4">
+                        <div class="d-flex justify-content-between align-items-start mb-3">
+                            <h6 class="card-title">{{ ride.from_location }} → {{ ride.to_location }}</h6>
+                            <span class="status-badge status-active">Active</span>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <p><strong>📅 Date:</strong> {{ ride.date }}</p>
+                            <p><strong>⏰ Time:</strong> {{ ride.departure_time }}</p>
+                            <p><strong>💺 Available Seats:</strong> {{ ride.available_seats }}</p>
+                            <p><strong>💰 Price per Seat:</strong> ₹{{ ride.price_per_seat }}</p>
+                            {% if ride.car_model and ride.car_model != 'Not specified' %}
+                            <p><strong>🚗 Vehicle:</strong> {{ ride.car_model }}</p>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="d-flex gap-2">
+                            <button class="btn btn-sm btn-outline-primary">📝 Edit</button>
+                            <button class="btn btn-sm btn-outline-danger">🗑️ Delete</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <div class="text-center py-5">
+            <h4>📭 No Rides Created Yet</h4>
+            <p class="text-muted mb-4">You haven't created any rides yet. Start sharing your rides with fellow students!</p>
+            <a href="/create_ride" class="btn btn-primary btn-lg">
+                ➕ Create Your First Ride
+            </a>
+        </div>
+        {% endif %}
+        
+        <div class="text-center mt-4">
+            <a href="/create_ride" class="btn btn-success btn-lg me-3">
+                ➕ Create New Ride
+            </a>
+            <a href="/dashboard" class="btn btn-secondary btn-lg">
+                ← Back to Dashboard
+            </a>
+        </div>
+    </div>
+    
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
