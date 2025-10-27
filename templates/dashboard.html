@@ -3,14 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dashboard - LiftLink : Carpool</title>
+    <title>Dashboard - LiftLink Carpool</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
-    
-    <!-- Professional Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    
     <style>
         :root {
             --bg-primary: #121212;
@@ -25,14 +22,56 @@
             --info: #0EA5E9;
             --danger: #dc3545;
         }
-        
+
         body {
             background: linear-gradient(135deg, #121212 0%, #1e1e1e 50%, #2d2d2d 100%);
             color: var(--text-primary);
             font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
             min-height: 100vh;
+            position: relative;
+            overflow-x: hidden;
         }
-        
+
+        /* Enhanced Glowing Background Effect */
+        body::before {
+            content: '';
+            position: fixed;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: 
+                radial-gradient(circle at 20% 30%, rgba(102, 126, 234, 0.12) 0%, transparent 60%),
+                radial-gradient(circle at 80% 70%, rgba(118, 75, 162, 0.12) 0%, transparent 60%),
+                radial-gradient(circle at 40% 80%, rgba(16, 185, 129, 0.08) 0%, transparent 50%);
+            animation: pulseGlow 8s ease-in-out infinite alternate;
+            z-index: -2;
+        }
+
+        body::after {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: 
+                linear-gradient(45deg, rgba(102, 126, 234, 0.03) 0%, transparent 50%),
+                linear-gradient(-45deg, rgba(118, 75, 162, 0.03) 0%, transparent 50%);
+            animation: rotateGlow 15s linear infinite;
+            z-index: -1;
+        }
+
+        @keyframes pulseGlow {
+            0% { transform: scale(0.9) rotate(0deg); opacity: 0.6; }
+            100% { transform: scale(1.1) rotate(180deg); opacity: 0.9; }
+        }
+
+        @keyframes rotateGlow {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
         /* Navigation Bar */
         .navbar {
             background: rgba(30, 30, 30, 0.9) !important;
@@ -40,559 +79,463 @@
             border-bottom: 1px solid rgba(255, 255, 255, 0.1);
             padding: 1rem 0;
         }
-        
-        .navbar-logo {
-            width: 50px;
-            height: 50px;
-            border-radius: 12px;
-            margin-right: 15px;
-            object-fit: cover;
-            border: 2px solid rgba(102, 126, 234, 0.3);
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
-        }
-        
+
         .navbar-brand {
-            font-family: 'Poppins', sans-serif !important;
-            font-weight: 600 !important;
-            font-size: 1.5rem !important;
-            letter-spacing: -0.5px;
+            font-family: 'Poppins', sans-serif;
+            font-weight: 700;
+            font-size: 1.5rem;
             color: var(--text-primary) !important;
-        }
-        
-        .nav-button {
-            background: rgba(102, 126, 234, 0.1);
-            border: 1px solid rgba(102, 126, 234, 0.2);
-            border-radius: 10px;
-            padding: 8px 16px;
-            margin: 0 5px;
-            color: var(--text-primary) !important;
-            text-decoration: none !important;
-            transition: all 0.3s ease;
-            display: inline-block;
-            font-family: 'Inter', sans-serif;
-            font-weight: 500;
-            font-size: 0.9rem;
         }
 
-        .nav-button:hover {
-            background: rgba(102, 126, 234, 0.2);
-            border-color: rgba(102, 126, 234, 0.4);
-            color: var(--text-primary) !important;
-            transform: translateY(-1px);
-            box-shadow: 0 4px 8px rgba(102, 126, 234, 0.2);
+        .nav-link {
+            color: var(--text-secondary) !important;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            border-radius: 8px;
+            padding: 0.5rem 1rem !important;
+            margin: 0 0.25rem;
         }
-        
-        /* Container */
-        .dashboard-container {
+
+        .nav-link:hover, .nav-link.active {
+            color: var(--accent) !important;
+            background: rgba(102, 126, 234, 0.1);
+        }
+
+        .container-main {
             max-width: 1200px;
             margin: 0 auto;
-            padding: 2rem;
+            padding: 2rem 1rem;
         }
-        
+
         /* Welcome Section */
         .welcome-section {
-            background: rgba(30, 30, 30, 0.8);
-            backdrop-filter: blur(20px);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            border-radius: 20px;
-            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.4);
-            padding: 2.5rem;
             text-align: center;
-            margin-bottom: 2rem;
+            margin-bottom: 3rem;
         }
-        
-        .welcome-text {
+
+        .welcome-title {
             font-family: 'Poppins', sans-serif;
-            font-size: 2.2rem;
-            font-weight: 600;
-            margin-bottom: 0.5rem;
-            letter-spacing: -0.5px;
-        }
-        
-        .gradient-text {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            font-size: 3rem;
+            font-weight: 700;
+            margin-bottom: 1rem;
+            background: linear-gradient(135deg, var(--accent) 0%, var(--accent-hover) 100%);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
             background-clip: text;
-            font-weight: 700;
         }
-        
-        .subtitle {
+
+        .welcome-subtitle {
+            font-size: 1.2rem;
             color: var(--text-secondary);
-            font-size: 1.1rem;
-            margin-bottom: 1rem;
-            font-weight: 400;
-        }
-        
-        .tagline {
-            color: var(--text-secondary);
-            font-size: 0.95rem;
-            font-style: italic;
-        }
-        
-        /* Stats Cards */
-        .stats-section {
             margin-bottom: 2rem;
         }
-        
+
+        /* Enhanced Statistics Cards */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 3rem;
+        }
+
         .stat-card {
             background: rgba(30, 30, 30, 0.8);
             backdrop-filter: blur(20px);
             border: 1px solid rgba(255, 255, 255, 0.1);
-            border-radius: 15px;
-            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
-            padding: 1.5rem;
-            text-align: center;
-            transition: transform 0.3s ease, box-shadow 0.3s ease;
-            height: 100%;
-        }
-        
-        .stat-card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 12px 40px rgba(0, 0, 0, 0.4);
-        }
-        
-        .stat-number {
-            font-size: 2.5rem;
-            font-weight: 700;
-            font-family: 'Poppins', sans-serif;
-            margin-bottom: 0.5rem;
-        }
-        
-        .stat-label {
-            color: var(--text-secondary);
-            font-size: 0.9rem;
-            font-weight: 500;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-        }
-        
-        .stat-rides { color: var(--accent); }
-        .stat-active { color: var(--success); }
-        .stat-taken { color: var(--info); }
-        .stat-bookings { color: var(--warning); }
-        
-        /* Action Cards */
-        .actions-section {
-            margin-bottom: 2rem;
-        }
-        
-        .action-card {
-            background: rgba(30, 30, 30, 0.8);
-            backdrop-filter: blur(20px);
-            border: 1px solid rgba(255, 255, 255, 0.1);
             border-radius: 20px;
-            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.4);
             padding: 2rem;
-            height: 100%;
-        }
-        
-        .card-title {
-            font-family: 'Poppins', sans-serif;
-            font-size: 1.3rem;
-            font-weight: 600;
-            margin-bottom: 1.5rem;
-            color: var(--text-primary);
-            display: flex;
-            align-items: center;
-        }
-        
-        .card-title::before {
-            content: '';
-            width: 4px;
-            height: 20px;
-            background: var(--accent);
-            border-radius: 2px;
-            margin-right: 10px;
-        }
-        
-        .action-btn {
-            display: block;
-            width: 100%;
-            padding: 1rem 1.5rem;
-            margin-bottom: 1rem;
-            border: none;
-            border-radius: 12px;
-            font-family: 'Inter', sans-serif;
-            font-weight: 500;
-            font-size: 1rem;
-            text-decoration: none;
             text-align: center;
             transition: all 0.3s ease;
             position: relative;
             overflow: hidden;
         }
-        
-        .action-btn:hover {
-            transform: translateY(-2px);
-            text-decoration: none;
-        }
-        
-        .btn-find {
-            background: linear-gradient(135deg, var(--accent) 0%, var(--accent-hover) 100%);
-            color: white;
-        }
-        
-        .btn-find:hover {
-            color: white;
-            box-shadow: 0 8px 25px rgba(102, 126, 234, 0.4);
-        }
-        
-        .btn-create {
-            background: linear-gradient(135deg, var(--success) 0%, #059669 100%);
-            color: white;
-        }
-        
-        .btn-create:hover {
-            color: white;
-            box-shadow: 0 8px 25px rgba(16, 185, 129, 0.4);
-        }
-        
-        .btn-bookings {
-            background: rgba(108, 117, 125, 0.2);
-            border: 1px solid rgba(108, 117, 125, 0.3);
-            color: var(--text-secondary);
-        }
-        
-        .btn-bookings:hover {
-            background: rgba(108, 117, 125, 0.3);
-            color: var(--text-primary);
-        }
-        
-        /* Profile Card */
-        .profile-card {
-            background: rgba(30, 30, 30, 0.8);
-            backdrop-filter: blur(20px);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            border-radius: 20px;
-            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.4);
-            padding: 2rem;
-            height: 100%;
-        }
-        
-        .profile-avatar {
-            width: 80px;
-            height: 80px;
-            border-radius: 50%;
-            background: linear-gradient(135deg, var(--accent) 0%, var(--accent-hover) 100%);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: white;
-            font-size: 2rem;
-            font-weight: bold;
-            margin-bottom: 1rem;
-            font-family: 'Poppins', sans-serif;
-        }
-        
-        .profile-name {
-            font-size: 1.3rem;
-            font-weight: 600;
-            margin-bottom: 0.5rem;
-            font-family: 'Poppins', sans-serif;
-        }
-        
-        .profile-info {
-            color: var(--text-secondary);
-            font-size: 0.9rem;
-            margin-bottom: 0.5rem;
-            display: flex;
-            justify-content: space-between;
-        }
-        
-        .profile-info strong {
-            color: var(--text-primary);
-        }
-        
-        .status-badge {
-            display: inline-block;
-            padding: 4px 12px;
-            border-radius: 20px;
-            font-size: 0.8rem;
-            font-weight: 500;
-            background: linear-gradient(135deg, var(--success) 0%, #059669 100%);
-            color: white;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-        }
-        
-        /* Floating Elements */
-        .floating-elements {
-            position: fixed;
+
+        .stat-card::before {
+            content: '';
+            position: absolute;
             top: 0;
             left: 0;
             width: 100%;
             height: 100%;
-            pointer-events: none;
+            background: linear-gradient(135deg, var(--accent) 0%, var(--accent-hover) 100%);
+            opacity: 0;
+            transition: opacity 0.3s ease;
             z-index: -1;
         }
-        
-        .floating-element {
+
+        .stat-card:hover {
+            transform: translateY(-5px);
+            border-color: var(--accent);
+            box-shadow: 0 15px 40px rgba(102, 126, 234, 0.2);
+        }
+
+        .stat-card:hover::before {
+            opacity: 0.05;
+        }
+
+        .stat-icon {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+            display: block;
+        }
+
+        .stat-number {
+            font-size: 2.5rem;
+            font-weight: 700;
+            font-family: 'Poppins', sans-serif;
+            margin-bottom: 0.5rem;
+            color: var(--text-primary);
+        }
+
+        .stat-label {
+            font-size: 1rem;
+            color: var(--text-secondary);
+            font-weight: 500;
+        }
+
+        .stat-change {
+            font-size: 0.9rem;
+            margin-top: 0.5rem;
+            padding: 0.25rem 0.75rem;
+            border-radius: 15px;
+            display: inline-block;
+        }
+
+        .stat-change.positive {
+            background: rgba(16, 185, 129, 0.2);
+            color: var(--success);
+        }
+
+        .stat-change.neutral {
+            background: rgba(255, 193, 7, 0.2);
+            color: var(--warning);
+        }
+
+        /* Quick Actions */
+        .quick-actions {
+            margin-bottom: 3rem;
+        }
+
+        .section-title {
+            font-family: 'Poppins', sans-serif;
+            font-size: 2rem;
+            font-weight: 600;
+            margin-bottom: 2rem;
+            text-align: center;
+            color: var(--text-primary);
+        }
+
+        .actions-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1.5rem;
+        }
+
+        .action-card {
+            background: rgba(30, 30, 30, 0.8);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 15px;
+            padding: 2rem;
+            text-align: center;
+            text-decoration: none;
+            color: var(--text-primary);
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .action-card::before {
+            content: '';
             position: absolute;
-            background: rgba(102, 126, 234, 0.05);
-            border-radius: 50%;
-            animation: float 8s ease-in-out infinite;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, var(--accent) 0%, var(--accent-hover) 100%);
+            opacity: 0;
+            transition: opacity 0.3s ease;
+            z-index: -1;
         }
-        
-        .floating-element:nth-child(1) {
-            width: 100px;
-            height: 100px;
-            top: 10%;
-            left: 10%;
-            animation-delay: 0s;
+
+        .action-card:hover {
+            transform: translateY(-3px);
+            color: var(--text-primary);
+            text-decoration: none;
+            border-color: var(--accent);
+            box-shadow: 0 10px 30px rgba(102, 126, 234, 0.3);
         }
-        
-        .floating-element:nth-child(2) {
-            width: 60px;
-            height: 60px;
-            top: 20%;
-            right: 20%;
-            animation-delay: 3s;
+
+        .action-card:hover::before {
+            opacity: 0.1;
         }
-        
-        .floating-element:nth-child(3) {
-            width: 80px;
-            height: 80px;
-            bottom: 15%;
-            left: 15%;
-            animation-delay: 6s;
+
+        .action-icon {
+            font-size: 2.5rem;
+            margin-bottom: 1rem;
+            display: block;
         }
-        
-        .floating-element:nth-child(4) {
-            width: 40px;
-            height: 40px;
-            bottom: 25%;
-            right: 10%;
-            animation-delay: 9s;
+
+        .action-title {
+            font-size: 1.2rem;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+            font-family: 'Poppins', sans-serif;
         }
-        
-        @keyframes float {
-            0%, 100% {
-                transform: translateY(0px) rotate(0deg);
-                opacity: 0.3;
-            }
-            50% {
-                transform: translateY(-30px) rotate(180deg);
-                opacity: 0.8;
-            }
+
+        .action-desc {
+            font-size: 0.9rem;
+            color: var(--text-secondary);
         }
-        
-        /* Responsive Design */
-        @media (max-width: 768px) {
-            .dashboard-container {
-                padding: 1rem;
-            }
-            
-            .welcome-section {
-                padding: 2rem 1.5rem;
-            }
-            
-            .welcome-text {
-                font-size: 1.8rem;
-            }
-            
-            .action-card,
-            .profile-card {
-                padding: 1.5rem;
-                margin-bottom: 1rem;
-            }
+
+        /* Recent Rides Section */
+        .recent-rides {
+            background: rgba(30, 30, 30, 0.8);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 20px;
+            padding: 2rem;
+            margin-bottom: 2rem;
         }
-        
-        /* Alert Styles */
-        .alert {
+
+        .ride-item {
+            background: rgba(45, 45, 45, 0.6);
+            border: 1px solid rgba(255, 255, 255, 0.1);
             border-radius: 12px;
-            border: none;
-            margin-bottom: 1.5rem;
+            padding: 1.5rem;
+            margin-bottom: 1rem;
+            transition: all 0.3s ease;
         }
-        
-        .alert-success {
-            background: rgba(40, 167, 69, 0.2);
-            color: #28a745;
-            border-left: 4px solid #28a745;
+
+        .ride-item:hover {
+            background: rgba(45, 45, 45, 0.8);
+            border-color: var(--accent);
+            transform: translateY(-2px);
         }
-        
-        .alert-danger {
-            background: rgba(220, 53, 69, 0.2);
-            color: #dc3545;
-            border-left: 4px solid #dc3545;
+
+        .ride-item:last-child {
+            margin-bottom: 0;
         }
-        
-        .alert-info {
-            background: rgba(14, 165, 233, 0.2);
-            color: #0ea5e9;
-            border-left: 4px solid #0ea5e9;
+
+        .ride-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+        }
+
+        .ride-route {
+            font-weight: 600;
+            font-size: 1.1rem;
+            color: var(--text-primary);
+        }
+
+        .ride-status {
+            padding: 0.25rem 0.75rem;
+            border-radius: 15px;
+            font-size: 0.8rem;
+            font-weight: 600;
+        }
+
+        .ride-status.active {
+            background: rgba(16, 185, 129, 0.2);
+            color: var(--success);
+        }
+
+        .ride-status.completed {
+            background: rgba(102, 126, 234, 0.2);
+            color: var(--accent);
+        }
+
+        .ride-details {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+        }
+
+        @media (max-width: 768px) {
+            .welcome-title {
+                font-size: 2rem;
+            }
+            
+            .stats-grid {
+                grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            }
+            
+            .actions-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .ride-header {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 0.5rem;
+            }
         }
     </style>
 </head>
 <body>
-    <!-- Floating Background Elements -->
-    <div class="floating-elements">
-        <div class="floating-element"></div>
-        <div class="floating-element"></div>
-        <div class="floating-element"></div>
-        <div class="floating-element"></div>
-    </div>
-
-    <!-- Navigation -->
-    <nav class="navbar navbar-expand-lg">
+    <!-- Navigation Bar -->
+    <nav class="navbar navbar-expand-lg navbar-dark">
         <div class="container">
-            <a class="navbar-brand d-flex align-items-center" href="/dashboard">
-                <img src="/static/images/xie_logo.jpg" alt="XIE Logo" class="navbar-logo">
-                <span class="gradient-text">LiftLink : Carpool</span>
+            <a class="navbar-brand" href="{{ url_for('dashboard') }}">
+                🚗 LiftLink
             </a>
-            <div class="navbar-nav ms-auto d-flex flex-row">
-                <a class="nav-button active" href="/dashboard">📊 Dashboard</a>
-                <a class="nav-button" href="/profile">👤 Profile</a>
-                <a class="nav-button" href="/logout">🚪 Logout</a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav me-auto">
+                    <li class="nav-item">
+                        <a class="nav-link active" href="{{ url_for('dashboard') }}">Dashboard</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('find_ride') }}">Find Rides</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('create_ride') }}">Create Ride</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('my_rides') }}">My Rides</a>
+                    </li>
+                </ul>
+                <ul class="navbar-nav">
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('profile') }}">Profile</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('logout') }}">Logout</a>
+                    </li>
+                </ul>
             </div>
         </div>
     </nav>
-    
-    <div class="dashboard-container">
+
+    <!-- Main Container -->
+    <div class="container-main">
         <!-- Flash Messages -->
         {% with messages = get_flashed_messages(with_categories=true) %}
-        {% if messages %}
-        {% for category, message in messages %}
-        <div class="alert alert-{{ 'danger' if category == 'error' else category }} alert-dismissible fade show" role="alert">
-            {{ message }}
-            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-        </div>
-        {% endfor %}
-        {% endif %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="alert alert-{{ 'danger' if category == 'error' else category }} alert-dismissible fade show" role="alert">
+                        {{ message }}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                    </div>
+                {% endfor %}
+            {% endif %}
         {% endwith %}
-        
+
         <!-- Welcome Section -->
         <div class="welcome-section">
-            <h1 class="welcome-text">🎉 Welcome back, <span class="gradient-text">{{ user.name }}!</span></h1>
-            <p class="subtitle">Xavier's Institute of Engineering - Sustainable Commute Hub</p>
-            <p class="tagline">Ready to share a ride?</p>
+            <h1 class="welcome-title">Welcome back, {{ user.name.split()[0] }}! 👋</h1>
+            <p class="welcome-subtitle">
+                {% if user.user_type == 'student' %}
+                    Ready to find your next ride or share yours with fellow students?
+                {% else %}
+                    Welcome to your faculty dashboard. Manage your rides and help students commute safely.
+                {% endif %}
+            </p>
         </div>
-        
-        <!-- Statistics Section -->
-        <div class="stats-section">
-            <div class="row g-3">
-                <div class="col-md-3 col-sm-6">
-                    <div class="stat-card">
-                        <div class="stat-number stat-rides">0</div>
-                        <div class="stat-label">Rides Offered</div>
-                    </div>
-                </div>
-                <div class="col-md-3 col-sm-6">
-                    <div class="stat-card">
-                        <div class="stat-number stat-active">0</div>
-                        <div class="stat-label">Active Rides</div>
-                    </div>
-                </div>
-                <div class="col-md-3 col-sm-6">
-                    <div class="stat-card">
-                        <div class="stat-number stat-taken">0</div>
-                        <div class="stat-label">Rides Taken</div>
-                    </div>
-                </div>
-                <div class="col-md-3 col-sm-6">
-                    <div class="stat-card">
-                        <div class="stat-number stat-bookings">0</div>
-                        <div class="stat-label">Bookings</div>
-                    </div>
-                </div>
+
+        <!-- Enhanced Statistics Grid -->
+        <div class="stats-grid">
+            <div class="stat-card">
+                <span class="stat-icon">🚗</span>
+                <div class="stat-number">{{ stats.rides_offered }}</div>
+                <div class="stat-label">Rides Offered</div>
+                <span class="stat-change {{ 'positive' if stats.rides_offered > 0 else 'neutral' }}">
+                    {% if stats.rides_offered > 0 %}
+                        +{{ stats.rides_offered }} this month
+                    {% else %}
+                        Create your first ride!
+                    {% endif %}
+                </span>
+            </div>
+
+            <div class="stat-card">
+                <span class="stat-icon">✨</span>
+                <div class="stat-number">{{ stats.active_rides }}</div>
+                <div class="stat-label">Active Rides</div>
+                <span class="stat-change {{ 'positive' if stats.active_rides > 0 else 'neutral' }}">
+                    {% if stats.active_rides > 0 %}
+                        Available now
+                    {% else %}
+                        No active rides
+                    {% endif %}
+                </span>
+            </div>
+
+            <div class="stat-card">
+                <span class="stat-icon">💰</span>
+                <div class="stat-number">₹{{ stats.total_earnings }}</div>
+                <div class="stat-label">Total Earnings</div>
+                <span class="stat-change {{ 'positive' if stats.total_earnings > 0 else 'neutral' }}">
+                    {% if stats.total_earnings > 0 %}
+                        Great job!
+                    {% else %}
+                        Start earning!
+                    {% endif %}
+                </span>
             </div>
         </div>
-        
-        <!-- Actions and Profile Section -->
-        <div class="actions-section">
-            <div class="row g-4">
-                <div class="col-lg-8">
-                    <div class="action-card">
-                        <h5 class="card-title">🚀 Quick Actions</h5>
-                        <a href="/find_ride" class="action-btn btn-find">
-                            🔍 Find a Ride
-                        </a>
-                        <a href="/create_ride" class="action-btn btn-create">
-                            ➕ Create New Ride
-                        </a>
-                        <a href="/my_bookings" class="action-btn btn-bookings">
-                            📋 My Bookings
-                        </a>
-                    </div>
-                </div>
-                
-                <div class="col-lg-4">
-                    <div class="profile-card">
-                        <h5 class="card-title">👤 Your Profile</h5>
-                        <div class="profile-avatar">
-                            {{ user.name[0] if user.name else 'U' }}
-                        </div>
-                        <div class="profile-name">{{ user.name or 'User' }}</div>
-                        <div class="profile-info">
-                            <span>Student ID:</span>
-                            <strong>{{ user.student_id or 'Not set' }}</strong>
-                        </div>
-                        <div class="profile-info">
-                            <span>Department:</span>
-                            <strong>{{ user.department or 'Not specified' }}</strong>
-                        </div>
-                        <div class="profile-info">
-                            <span>Year:</span>
-                            <strong>{{ user.year }}{{ 'st' if user.year == '1' else 'nd' if user.year == '2' else 'rd' if user.year == '3' else 'th' }} Year</strong>
-                        </div>
-                        <div class="profile-info">
-                            <span>Phone:</span>
-                            <strong>{{ user.phone or 'Not set' }}</strong>
-                        </div>
-                        <div class="profile-info">
-                            <span>Status:</span>
-                            <span class="status-badge">Verified Student</span>
-                        </div>
-                    </div>
-                </div>
+
+        <!-- Quick Actions -->
+        <div class="quick-actions">
+            <h2 class="section-title">Quick Actions</h2>
+            <div class="actions-grid">
+                <a href="{{ url_for('find_ride') }}" class="action-card">
+                    <span class="action-icon">🔍</span>
+                    <div class="action-title">Find a Ride</div>
+                    <div class="action-desc">Search for available rides to Xavier Institute</div>
+                </a>
+
+                <a href="{{ url_for('create_ride') }}" class="action-card">
+                    <span class="action-icon">➕</span>
+                    <div class="action-title">Create Ride</div>
+                    <div class="action-desc">Offer a ride and earn money while helping others</div>
+                </a>
+
+                <a href="{{ url_for('my_rides') }}" class="action-card">
+                    <span class="action-icon">📋</span>
+                    <div class="action-title">My Rides</div>
+                    <div class="action-desc">Manage your offered rides and bookings</div>
+                </a>
+
+                <a href="{{ url_for('profile') }}" class="action-card">
+                    <span class="action-icon">👤</span>
+                    <div class="action-title">Profile</div>
+                    <div class="action-desc">Update your information and preferences</div>
+                </a>
             </div>
         </div>
+
+        <!-- Recent Rides -->
+        {% if user_rides %}
+        <div class="recent-rides">
+            <h2 class="section-title">Your Recent Rides</h2>
+            {% for ride in user_rides[:3] %}
+            <div class="ride-item">
+                <div class="ride-header">
+                    <div class="ride-route">
+                        {{ ride.from_location }} → {{ ride.to_location }}
+                    </div>
+                    <span class="ride-status {{ 'active' if ride.available_seats > 0 else 'completed' }}">
+                        {{ 'Active' if ride.available_seats > 0 else 'Full' }}
+                    </span>
+                </div>
+                <div class="ride-details">
+                    <span>🕐 {{ ride.departure_time }}</span>
+                    <span>📅 {{ ride.date }}</span>
+                    <span>💺 {{ ride.available_seats }}/{{ ride.total_seats }} seats</span>
+                    <span>💰 ₹{{ ride.price_per_seat }}/seat</span>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% endif %}
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
-    
-    <script>
-        // Add interactive effects
-        document.addEventListener('DOMContentLoaded', function() {
-            // Animate stats on load
-            const statNumbers = document.querySelectorAll('.stat-number');
-            statNumbers.forEach(stat => {
-                stat.style.opacity = '0';
-                stat.style.transform = 'translateY(20px)';
-                
-                setTimeout(() => {
-                    stat.style.transition = 'all 0.8s ease';
-                    stat.style.opacity = '1';
-                    stat.style.transform = 'translateY(0)';
-                }, Math.random() * 500);
-            });
-            
-            // Button hover effects
-            const actionBtns = document.querySelectorAll('.action-btn');
-            actionBtns.forEach(btn => {
-                btn.addEventListener('mouseenter', function() {
-                    this.style.transform = 'translateY(-3px) scale(1.02)';
-                });
-                
-                btn.addEventListener('mouseleave', function() {
-                    this.style.transform = 'translateY(0) scale(1)';
-                });
-            });
-            
-            // Card hover effects
-            const cards = document.querySelectorAll('.stat-card, .action-card, .profile-card');
-            cards.forEach(card => {
-                card.addEventListener('mouseenter', function() {
-                    this.style.transform = 'translateY(-8px)';
-                    this.style.boxShadow = '0 25px 50px rgba(0, 0, 0, 0.5)';
-                });
-                
-                card.addEventListener('mouseleave', function() {
-                    this.style.transform = 'translateY(0)';
-                    this.style.boxShadow = '';
-                });
-            });
-        });
-    </script>
 </body>
 </html>
