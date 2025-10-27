@@ -3,14 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Login - LiftLink : Carpool</title>
+    <title>Login - LiftLink Carpool</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
-    
     <!-- Professional Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    
     <style>
         :root {
             --bg-primary: #121212;
@@ -21,7 +19,7 @@
             --accent: #667eea;
             --accent-hover: #5a67d8;
         }
-        
+
         body {
             background: linear-gradient(135deg, #121212 0%, #1e1e1e 50%, #2d2d2d 100%);
             color: var(--text-primary);
@@ -31,19 +29,59 @@
             align-items: center;
             justify-content: center;
             padding: 20px;
+            position: relative;
+            overflow-x: hidden;
         }
-        
+
+        /* Enhanced Glowing Background Effect */
+        body::before {
+            content: '';
+            position: fixed;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: 
+                radial-gradient(circle at 25% 25%, rgba(102, 126, 234, 0.15) 0%, transparent 50%),
+                radial-gradient(circle at 75% 75%, rgba(118, 75, 162, 0.15) 0%, transparent 50%);
+            animation: pulseGlow 6s ease-in-out infinite alternate;
+            z-index: -2;
+        }
+
+        body::after {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: radial-gradient(circle at 50% 50%, rgba(102, 126, 234, 0.05) 0%, transparent 70%);
+            animation: rotateGlow 12s linear infinite;
+            z-index: -1;
+        }
+
+        @keyframes pulseGlow {
+            0% { transform: scale(0.8) rotate(0deg); opacity: 0.4; }
+            100% { transform: scale(1.2) rotate(180deg); opacity: 0.8; }
+        }
+
+        @keyframes rotateGlow {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
         .login-container {
             width: 100%;
             max-width: 450px;
             margin: 0 auto;
+            z-index: 1;
         }
-        
+
         .logo-container {
             text-align: center;
             margin-bottom: 2rem;
         }
-        
+
         .logo {
             width: 100px;
             height: 100px;
@@ -53,7 +91,7 @@
             border: 2px solid rgba(102, 126, 234, 0.2);
             object-fit: cover;
         }
-        
+
         .welcome-text {
             font-family: 'Poppins', sans-serif;
             font-size: 2rem;
@@ -61,7 +99,7 @@
             margin-bottom: 0.5rem;
             letter-spacing: -0.5px;
         }
-        
+
         .gradient-text {
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             -webkit-background-clip: text;
@@ -69,14 +107,67 @@
             background-clip: text;
             font-weight: 700;
         }
-        
+
         .subtitle {
             color: var(--text-secondary);
             font-size: 1rem;
             margin-bottom: 2rem;
             font-weight: 400;
         }
-        
+
+        /* Enhanced User Type Toggle */
+        .user-type-toggle {
+            display: flex;
+            background: rgba(45, 45, 45, 0.8);
+            border-radius: 15px;
+            padding: 4px;
+            margin-bottom: 2rem;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+        }
+
+        .toggle-option {
+            flex: 1;
+            padding: 12px 20px;
+            text-align: center;
+            border-radius: 12px;
+            color: var(--text-secondary);
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-weight: 500;
+            font-family: 'Inter', sans-serif;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .toggle-option::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, var(--accent) 0%, var(--accent-hover) 100%);
+            opacity: 0;
+            transition: opacity 0.3s ease;
+            z-index: -1;
+        }
+
+        .toggle-option.active {
+            color: white;
+            transform: scale(1.02);
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        .toggle-option.active::before {
+            opacity: 1;
+        }
+
+        .toggle-option:hover:not(.active) {
+            color: var(--accent);
+            background: rgba(102, 126, 234, 0.1);
+        }
+
         .login-card {
             background: rgba(30, 30, 30, 0.8);
             backdrop-filter: blur(20px);
@@ -85,14 +176,14 @@
             box-shadow: 0 20px 60px rgba(0, 0, 0, 0.4);
             padding: 2.5rem;
         }
-        
+
         .form-label {
             color: var(--text-primary);
             font-weight: 500;
             margin-bottom: 0.8rem;
             font-size: 0.95rem;
         }
-        
+
         .form-control {
             background: rgba(45, 45, 45, 0.8);
             border: 1px solid rgba(255, 255, 255, 0.1);
@@ -103,19 +194,25 @@
             transition: all 0.3s ease;
             font-family: 'Inter', sans-serif;
         }
-        
+
         .form-control:focus {
             background: rgba(45, 45, 45, 0.9);
             border-color: var(--accent);
             color: var(--text-primary);
             box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25);
         }
-        
+
         .form-control::placeholder {
             color: var(--text-secondary);
             font-weight: 400;
         }
-        
+
+        .form-text {
+            color: var(--text-secondary);
+            font-size: 0.8rem;
+            margin-top: 0.5rem;
+        }
+
         .btn-primary {
             background: linear-gradient(135deg, var(--accent) 0%, var(--accent-hover) 100%);
             border: none;
@@ -129,13 +226,8 @@
             position: relative;
             overflow: hidden;
         }
-        
-        .btn-primary:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 8px 25px rgba(102, 126, 234, 0.4);
-        }
-        
-        .btn-primary:before {
+
+        .btn-primary::before {
             content: '';
             position: absolute;
             top: 0;
@@ -143,153 +235,118 @@
             width: 100%;
             height: 100%;
             background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
-            transition: left 0.5s ease;
+            transition: left 0.5s;
         }
-        
-        .btn-primary:hover:before {
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-primary:hover::before {
             left: 100%;
         }
-        
+
         .register-link {
             text-align: center;
             margin-top: 1.5rem;
             color: var(--text-secondary);
         }
-        
+
         .register-link a {
             color: var(--accent);
             text-decoration: none;
             font-weight: 500;
             transition: color 0.3s ease;
         }
-        
+
         .register-link a:hover {
             color: var(--accent-hover);
             text-decoration: underline;
         }
-        
+
         .alert {
             border-radius: 12px;
             border: none;
             margin-bottom: 1.5rem;
+            backdrop-filter: blur(10px);
         }
-        
+
         .alert-success {
-            background: rgba(40, 167, 69, 0.2);
-            color: #28a745;
-            border-left: 4px solid #28a745;
+            background: rgba(16, 185, 129, 0.2);
+            color: #10b981;
+            border-left: 4px solid #10b981;
         }
-        
+
         .alert-danger {
             background: rgba(220, 53, 69, 0.2);
             color: #dc3545;
             border-left: 4px solid #dc3545;
         }
-        
-        .floating-elements {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            pointer-events: none;
-            z-index: -1;
-        }
-        
-        .floating-element {
-            position: absolute;
-            background: rgba(102, 126, 234, 0.1);
-            border-radius: 50%;
-            animation: float 6s ease-in-out infinite;
-        }
-        
-        .floating-element:nth-child(1) {
-            width: 60px;
-            height: 60px;
-            top: 20%;
-            left: 10%;
-            animation-delay: 0s;
-        }
-        
-        .floating-element:nth-child(2) {
-            width: 40px;
-            height: 40px;
-            top: 60%;
-            right: 15%;
-            animation-delay: 2s;
-        }
-        
-        .floating-element:nth-child(3) {
-            width: 80px;
-            height: 80px;
-            bottom: 20%;
-            left: 20%;
-            animation-delay: 4s;
-        }
-        
-        @keyframes float {
-            0%, 100% {
-                transform: translateY(0px) rotate(0deg);
-                opacity: 0.7;
-            }
-            50% {
-                transform: translateY(-20px) rotate(180deg);
-                opacity: 1;
-            }
-        }
-        
+
         @media (max-width: 576px) {
             .login-card {
                 padding: 2rem 1.5rem;
                 margin: 1rem;
             }
-            
             .welcome-text {
                 font-size: 1.75rem;
             }
-            
             .logo {
                 width: 80px;
                 height: 80px;
+            }
+            .toggle-option {
+                padding: 10px 16px;
+                font-size: 0.9rem;
             }
         }
     </style>
 </head>
 <body>
-    <!-- Floating Background Elements -->
-    <div class="floating-elements">
-        <div class="floating-element"></div>
-        <div class="floating-element"></div>
-        <div class="floating-element"></div>
-    </div>
-
     <div class="login-container">
         <!-- Logo and Welcome Section -->
         <div class="logo-container">
-            <img src="/static/images/xie_logo.jpg" alt="Xavier Institute Logo" class="logo">
+            <img src="{{ url_for('static', filename='images/xie_logo.jpg') }}" alt="Xavier Institute Logo" class="logo">
             <h1 class="welcome-text">Welcome to <span class="gradient-text">LiftLink</span></h1>
-            <p class="subtitle">Xavier's Institute of Engineering - Carpool System</p>
+            <p class="subtitle">Xavier's Institute of Engineering - Sustainable Carpool System</p>
         </div>
-        
+
         <!-- Login Card -->
         <div class="login-card">
             <!-- Flash Messages -->
             {% with messages = get_flashed_messages(with_categories=true) %}
-            {% if messages %}
-            {% for category, message in messages %}
-            <div class="alert alert-{{ 'danger' if category == 'error' else category }} alert-dismissible fade show" role="alert">
-                {{ message }}
-                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-            </div>
-            {% endfor %}
-            {% endif %}
+                {% if messages %}
+                    {% for category, message in messages %}
+                        <div class="alert alert-{{ 'danger' if category == 'error' else category }} alert-dismissible fade show" role="alert">
+                            {{ message }}
+                            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                        </div>
+                    {% endfor %}
+                {% endif %}
             {% endwith %}
-            
+
+            <!-- Enhanced User Type Toggle -->
+            <div class="user-type-toggle">
+                <div class="toggle-option active" data-type="student">
+                    👨‍🎓 Student
+                </div>
+                <div class="toggle-option" data-type="staff">
+                    👨‍🏫 Staff
+                </div>
+            </div>
+
             <!-- Login Form -->
-            <form method="POST" action="/login">
+            <form method="POST" action="{{ url_for('login') }}">
+                <input type="hidden" name="user_type" id="user_type" value="student">
+                
                 <div class="mb-3">
                     <label for="email" class="form-label">Xavier Institute Email</label>
-                    <input type="email" class="form-control" id="email" name="email" required>
+                    <input type="email" class="form-control" id="email" name="email" 
+                           placeholder="Enter your institute email" required>
+                    <div class="form-text">
+                        <span id="email-hint">Students: use @student.xavier.ac.in</span>
+                    </div>
                 </div>
                 
                 <div class="mb-4">
@@ -299,42 +356,101 @@
                 </div>
                 
                 <button type="submit" class="btn btn-primary">
-                    🔓 Login to LiftLink
+                    🚗 Login to LiftLink
                 </button>
             </form>
-            
+
             <!-- Register Link -->
             <div class="register-link">
-                Don't have an account? <a href="/register">Register here</a>
+                Don't have an account? <a href="{{ url_for('register') }}">Register here</a>
             </div>
         </div>
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
-    
     <script>
-        // Add some interactive effects
         document.addEventListener('DOMContentLoaded', function() {
-            // Focus effect for form inputs
-            const inputs = document.querySelectorAll('.form-control');
-            inputs.forEach(input => {
-                input.addEventListener('focus', function() {
-                    this.parentElement.style.transform = 'scale(1.02)';
-                    this.parentElement.style.transition = 'transform 0.3s ease';
-                });
-                
-                input.addEventListener('blur', function() {
-                    this.parentElement.style.transform = 'scale(1)';
+            const toggleOptions = document.querySelectorAll('.toggle-option');
+            const userTypeInput = document.getElementById('user_type');
+            const emailHint = document.getElementById('email-hint');
+            const emailInput = document.getElementById('email');
+
+            // Handle user type toggle
+            toggleOptions.forEach(option => {
+                option.addEventListener('click', function() {
+                    // Remove active from all options
+                    toggleOptions.forEach(opt => opt.classList.remove('active'));
+                    // Add active to clicked option
+                    this.classList.add('active');
+                    
+                    const userType = this.getAttribute('data-type');
+                    userTypeInput.value = userType;
+                    
+                    // Update email hint and placeholder
+                    if (userType === 'student') {
+                        emailHint.textContent = 'Students: use @student.xavier.ac.in';
+                        emailInput.placeholder = 'your.name@student.xavier.ac.in';
+                    } else {
+                        emailHint.textContent = 'Staff: use @xavier.ac.in';
+                        emailInput.placeholder = 'your.name@xavier.ac.in';
+                    }
                 });
             });
-            
-            // Button click effect
-            const submitBtn = document.querySelector('.btn-primary');
-            submitBtn.addEventListener('click', function(e) {
-                this.style.transform = 'scale(0.98)';
-                setTimeout(() => {
-                    this.style.transform = 'scale(1)';
-                }, 150);
+
+            // Enhanced form validation
+            const form = document.querySelector('form');
+            form.addEventListener('submit', function(e) {
+                const email = emailInput.value.trim().toLowerCase();
+                const userType = userTypeInput.value;
+                
+                // Validate email domain based on user type
+                if (userType === 'student' && !email.endsWith('@student.xavier.ac.in')) {
+                    e.preventDefault();
+                    showError('Students must use @student.xavier.ac.in email address');
+                    return false;
+                }
+                
+                if (userType === 'staff' && !email.endsWith('@xavier.ac.in')) {
+                    e.preventDefault();
+                    showError('Staff must use @xavier.ac.in email address');
+                    return false;
+                }
+
+                // Show loading state
+                const submitBtn = form.querySelector('.btn-primary');
+                submitBtn.innerHTML = '🔄 Logging in...';
+                submitBtn.disabled = true;
+            });
+
+            // Helper function to show errors
+            function showError(message) {
+                // Remove existing alerts
+                const existingAlerts = document.querySelectorAll('.alert');
+                existingAlerts.forEach(alert => alert.remove());
+                
+                // Create new alert
+                const alertDiv = document.createElement('div');
+                alertDiv.className = 'alert alert-danger alert-dismissible fade show';
+                alertDiv.innerHTML = `
+                    ${message}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                `;
+                
+                // Insert at top of form
+                const form = document.querySelector('form');
+                form.insertBefore(alertDiv, form.firstChild);
+            }
+
+            // Auto-fill email based on user type for demo
+            emailInput.addEventListener('focus', function() {
+                if (this.value === '') {
+                    const userType = userTypeInput.value;
+                    if (userType === 'student') {
+                        this.placeholder = 'test@student.xavier.ac.in';
+                    } else {
+                        this.placeholder = 'john.doe@xavier.ac.in';
+                    }
+                }
             });
         });
     </script>
