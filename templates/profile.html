@@ -7,7 +7,7 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Poppins:wght@300;400;500;600;700&family=Playfair+Display:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <style>
         :root {
             --bg-primary: #121212;
@@ -32,7 +32,7 @@
             overflow-x: hidden;
         }
 
-        /* Enhanced Glowing Background Effect */
+        /* Enhanced Glowing Background with Moving Bubbles */
         body::before {
             content: '';
             position: fixed;
@@ -47,16 +47,37 @@
             z-index: -2;
         }
 
-        body::after {
-            content: '';
+        /* Animated Floating Bubbles */
+        .bubble {
             position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: radial-gradient(circle at 50% 50%, rgba(102, 126, 234, 0.05) 0%, transparent 70%);
-            animation: rotateGlow 12s linear infinite;
+            border-radius: 50%;
+            opacity: 0.1;
+            pointer-events: none;
             z-index: -1;
+        }
+
+        .bubble1 {
+            width: 35px;
+            height: 35px;
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            left: 15%;
+            animation: float1 7s ease-in-out infinite;
+        }
+
+        .bubble2 {
+            width: 55px;
+            height: 55px;
+            background: linear-gradient(45deg, #764ba2, #667eea);
+            left: 75%;
+            animation: float2 9s ease-in-out infinite;
+        }
+
+        .bubble3 {
+            width: 25px;
+            height: 25px;
+            background: linear-gradient(45deg, #10B981, #667eea);
+            left: 45%;
+            animation: float3 6s ease-in-out infinite;
         }
 
         @keyframes pulseGlow {
@@ -64,9 +85,19 @@
             100% { transform: scale(1.2) rotate(180deg); opacity: 0.8; }
         }
 
-        @keyframes rotateGlow {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
+        @keyframes float1 {
+            0%, 100% { transform: translateY(100vh) scale(1); }
+            50% { transform: translateY(-20vh) scale(1.2); }
+        }
+
+        @keyframes float2 {
+            0%, 100% { transform: translateY(100vh) scale(1); }
+            50% { transform: translateY(-30vh) scale(0.8); }
+        }
+
+        @keyframes float3 {
+            0%, 100% { transform: translateY(100vh) scale(1); }
+            50% { transform: translateY(-25vh) scale(1.1); }
         }
 
         /* Navigation Bar */
@@ -78,24 +109,56 @@
         }
 
         .navbar-brand {
-            font-family: 'Poppins', sans-serif;
+            font-family: 'Playfair Display', serif;
             font-weight: 700;
-            font-size: 1.5rem;
+            font-size: 2.5rem;
             color: var(--text-primary) !important;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            display: flex;
+            align-items: center;
+            gap: 1rem;
         }
 
-        .nav-link {
-            color: var(--text-secondary) !important;
+        .logo-image {
+            width: 50px;
+            height: 50px;
+            border-radius: 12px;
+            object-fit: cover;
+            border: 2px solid rgba(102, 126, 234, 0.3);
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+        }
+
+        .nav-items {
+            display: flex;
+            gap: 1rem;
+            align-items: center;
+        }
+
+        .nav-box {
+            background: rgba(45, 45, 45, 0.8);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            padding: 0.7rem 1.2rem;
+            color: var(--text-secondary);
+            text-decoration: none;
             font-weight: 500;
             transition: all 0.3s ease;
-            border-radius: 8px;
-            padding: 0.5rem 1rem !important;
-            margin: 0 0.25rem;
         }
 
-        .nav-link:hover, .nav-link.active {
-            color: var(--accent) !important;
-            background: rgba(102, 126, 234, 0.1);
+        .nav-box.active {
+            background: linear-gradient(135deg, var(--accent) 0%, var(--accent-hover) 100%);
+            color: white;
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        .nav-box:hover {
+            background: rgba(102, 126, 234, 0.2);
+            color: var(--accent);
+            border-color: var(--accent);
+            transform: translateY(-2px);
         }
 
         .profile-container {
@@ -131,8 +194,8 @@
         }
 
         .profile-name {
-            font-family: 'Poppins', sans-serif;
-            font-size: 2rem;
+            font-family: 'Playfair Display', serif;
+            font-size: 2.2rem;
             font-weight: 600;
             margin-bottom: 0.5rem;
             color: white;
@@ -158,35 +221,13 @@
         }
 
         .section-title {
-            font-family: 'Poppins', sans-serif;
-            font-size: 1.5rem;
+            font-family: 'Playfair Display', serif;
+            font-size: 1.8rem;
             font-weight: 600;
             margin-bottom: 1.5rem;
             color: var(--text-primary);
             border-bottom: 2px solid var(--accent);
             padding-bottom: 0.5rem;
-        }
-
-        /* Enhanced Profile Info Grid - Properly Aligned */
-        .profile-info-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-            gap: 1.5rem;
-            margin-bottom: 2rem;
-        }
-
-        .info-card {
-            background: rgba(45, 45, 45, 0.6);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            border-radius: 15px;
-            padding: 1.5rem;
-            transition: all 0.3s ease;
-        }
-
-        .info-card:hover {
-            background: rgba(45, 45, 45, 0.8);
-            border-color: var(--accent);
-            transform: translateY(-2px);
         }
 
         /* Perfect Alignment for Profile Details */
@@ -229,6 +270,68 @@
             font-weight: 600;
         }
 
+        /* Enhanced Earnings Section */
+        .earnings-section {
+            background: linear-gradient(135deg, rgba(16, 185, 129, 0.1) 0%, rgba(102, 126, 234, 0.1) 100%);
+            border: 1px solid rgba(16, 185, 129, 0.3);
+            border-radius: 15px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+        }
+
+        .earnings-header {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .earnings-icon {
+            font-size: 2rem;
+            color: var(--success);
+        }
+
+        .earnings-title {
+            font-family: 'Playfair Display', serif;
+            font-size: 1.8rem;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        .earnings-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+        }
+
+        .earning-item {
+            background: rgba(45, 45, 45, 0.6);
+            border: 1px solid rgba(16, 185, 129, 0.2);
+            border-radius: 12px;
+            padding: 1.5rem;
+            text-align: center;
+            transition: all 0.3s ease;
+        }
+
+        .earning-item:hover {
+            background: rgba(45, 45, 45, 0.8);
+            border-color: var(--success);
+            transform: translateY(-2px);
+        }
+
+        .earning-amount {
+            font-size: 2rem;
+            font-weight: 700;
+            color: var(--success);
+            margin-bottom: 0.5rem;
+        }
+
+        .earning-label {
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+            font-weight: 500;
+        }
+
         .about-section {
             background: rgba(45, 45, 45, 0.6);
             border: 1px solid rgba(255, 255, 255, 0.1);
@@ -250,12 +353,6 @@
             border-radius: 15px;
             padding: 1.5rem;
             margin-bottom: 2rem;
-        }
-
-        .car-icon {
-            font-size: 2rem;
-            color: var(--accent);
-            margin-bottom: 1rem;
         }
 
         .btn-edit {
@@ -298,54 +395,55 @@
                 min-width: 100%;
             }
             
-            .profile-info-grid {
-                grid-template-columns: 1fr;
-            }
-            
             .profile-name {
-                font-size: 1.5rem;
+                font-size: 1.8rem;
             }
             
             .profile-picture {
                 width: 100px;
                 height: 100px;
             }
+
+            .nav-items {
+                flex-direction: column;
+                gap: 0.5rem;
+            }
+
+            .nav-box {
+                padding: 0.5rem 1rem;
+                font-size: 0.9rem;
+            }
+
+            .earnings-grid {
+                grid-template-columns: 1fr;
+            }
         }
     </style>
 </head>
 <body>
+    <!-- Animated Floating Bubbles -->
+    <div class="bubble bubble1"></div>
+    <div class="bubble bubble2"></div>
+    <div class="bubble bubble3"></div>
+
     <!-- Navigation Bar -->
     <nav class="navbar navbar-expand-lg navbar-dark">
         <div class="container">
             <a class="navbar-brand" href="{{ url_for('dashboard') }}">
-                🚗 LiftLink
+                <img src="{{ url_for('static', filename='images/xie_logo.jpg') }}" alt="Xavier Institute Logo" class="logo-image">
+                LiftLink
             </a>
-            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
-                <span class="navbar-toggler-icon"></span>
-            </button>
-            <div class="collapse navbar-collapse" id="navbarNav">
-                <ul class="navbar-nav me-auto">
-                    <li class="nav-item">
-                        <a class="nav-link" href="{{ url_for('dashboard') }}">Dashboard</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="{{ url_for('find_ride') }}">Find Rides</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="{{ url_for('create_ride') }}">Create Ride</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="{{ url_for('my_rides') }}">My Rides</a>
-                    </li>
-                </ul>
-                <ul class="navbar-nav">
-                    <li class="nav-item">
-                        <a class="nav-link active" href="{{ url_for('profile') }}">Profile</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="{{ url_for('logout') }}">Logout</a>
-                    </li>
-                </ul>
+            
+            <div class="nav-items">
+                <a href="{{ url_for('dashboard') }}" class="nav-box">
+                    🏠 Dashboard
+                </a>
+                <a href="{{ url_for('profile') }}" class="nav-box active">
+                    👤 Profile
+                </a>
+                <a href="{{ url_for('logout') }}" class="nav-box">
+                    🚪 Logout
+                </a>
             </div>
         </div>
     </nav>
@@ -387,6 +485,28 @@
 
             <!-- Profile Body -->
             <div class="profile-body">
+                <!-- Earnings Section -->
+                <div class="earnings-section">
+                    <div class="earnings-header">
+                        <span class="earnings-icon">💰</span>
+                        <h2 class="earnings-title">Earnings Overview</h2>
+                    </div>
+                    <div class="earnings-grid">
+                        <div class="earning-item">
+                            <div class="earning-amount">₹{{ stats.total_earnings if stats is defined else 0 }}</div>
+                            <div class="earning-label">Total Earnings</div>
+                        </div>
+                        <div class="earning-item">
+                            <div class="earning-amount">{{ stats.rides_offered if stats is defined else 0 }}</div>
+                            <div class="earning-label">Rides Offered</div>
+                        </div>
+                        <div class="earning-item">
+                            <div class="earning-amount">{{ stats.active_rides if stats is defined else 0 }}</div>
+                            <div class="earning-label">Active Rides</div>
+                        </div>
+                    </div>
+                </div>
+
                 <h2 class="section-title">Personal Information</h2>
                 
                 <!-- Perfectly Aligned Profile Details -->
