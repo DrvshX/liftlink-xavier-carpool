@@ -1,9 +1,10 @@
-# LiftLink Carpool - Enhanced Flask Web Application
+# LiftLink Carpool - Enhanced Flask Web Application with Persistent Storage
 # Spyder Compatible - Xavier's Institute of Engineering - Sustainable Commute Hub
-# Version 8.0 - Complete with All Fixes & Enhanced Features
+# Version 8.1 - Fixed Persistent User Registration Issue
 
 import os
 import sys
+import json
 from flask import Flask, render_template, request, redirect, url_for, flash, session, send_from_directory
 from werkzeug.utils import secure_filename
 from functools import wraps
@@ -25,7 +26,7 @@ os.chdir(script_dir)
 
 # Debug info
 print("=" * 60)
-print(" LIFTLINK CARPOOL - ENHANCED VERSION 8.0")
+print(" LIFTLINK CARPOOL - ENHANCED VERSION 8.1")
 print("=" * 60)
 print(f"Current directory: {os.getcwd()}")
 print(f"Templates exist: {os.path.exists('templates')}")
@@ -51,9 +52,14 @@ ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif'}
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 os.makedirs('static/uploads', exist_ok=True)
 os.makedirs('static/images', exist_ok=True)
+os.makedirs('data', exist_ok=True)  # Create data directory for persistent storage
 
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024  # 16MB max file size
+
+# File paths for persistent storage
+USERS_DB_FILE = 'data/users_db.json'
+RIDES_DB_FILE = 'data/rides_db.json'
 
 # Profile Picture Helper Functions
 def allowed_file(filename):
@@ -97,147 +103,206 @@ def save_picture(form_picture, current_user_email):
     
     return picture_fn
 
-# Enhanced user database with staff support
-users_db = {
-    # Test Student Account
-    'test@student.xavier.ac.in': {
-        'name': 'Durvesh Bedre',
-        'email': 'test@student.xavier.ac.in',
-        'password': hashlib.sha256('password123'.encode()).hexdigest(),
-        'phone': '7700090035',
-        'student_id': '2023032002',
-        'department': 'Electronics & Telecommunication',
-        'year': 4,
-        'gender': 'Male',
-        'about': 'Final year ETC student interested in sustainable transportation.',
-        'profile_pic': None,
-        'verified': True,
-        'user_type': 'student'
-    },
-    # Test Staff Account
-    'john.doe@xavier.ac.in': {
-        'name': 'Dr. John Doe',
-        'email': 'john.doe@xavier.ac.in',
-        'password': hashlib.sha256('staff123'.encode()).hexdigest(),
-        'phone': '9876543210',
-        'employee_id': 'XIE001',
-        'department': 'Computer Engineering',
-        'designation': 'Assistant Professor',
-        'about': 'Assistant Professor in Computer Engineering Department.',
-        'profile_pic': None,
-        'verified': True,
-        'user_type': 'staff',
-        'car_model': 'Honda City',
-        'max_passengers': 3
-    },
-    # Admin Account
-    'admin@student.xavier.ac.in': {
-        'name': 'Admin User',
-        'email': 'admin@student.xavier.ac.in',
-        'password': hashlib.sha256('admin123'.encode()).hexdigest(),
-        'phone': '9876543210',
-        'student_id': '2023000001',
-        'department': 'Computer Engineering',
-        'year': 4,
-        'gender': 'Male',
-        'about': 'System Administrator',
-        'profile_pic': None,
-        'verified': True,
-        'user_type': 'student'
-    },
-    # Additional Staff Account
-    'priya.patil@xavier.ac.in': {
-        'name': 'Dr. Priya Patil',
-        'email': 'priya.patil@xavier.ac.in',
-        'password': hashlib.sha256('staff123'.encode()).hexdigest(),
-        'phone': '9876543211',
-        'employee_id': 'XIE002',
-        'department': 'Electronics & Telecom',
-        'designation': 'Associate Professor',
-        'about': 'Associate Professor in Electronics & Telecom Department.',
-        'profile_pic': None,
-        'verified': True,
-        'user_type': 'staff',
-        'car_model': 'Maruti Swift',
-        'max_passengers': 3
-    }
-}
+# Persistent Storage Functions
+def load_users_db():
+    """Load users database from JSON file"""
+    try:
+        if os.path.exists(USERS_DB_FILE):
+            with open(USERS_DB_FILE, 'r', encoding='utf-8') as f:
+                users_data = json.load(f)
+                print(f"✓ Loaded {len(users_data)} users from database")
+                return users_data
+        else:
+            print("Creating new users database...")
+            return get_default_users()
+    except Exception as e:
+        print(f"✗ Error loading users database: {e}")
+        return get_default_users()
 
-# Enhanced sample rides data with car details
-sample_rides = [
-    {
-        'id': 1,
-        'driver_name': 'Rohit Sharma',
-        'driver_email': '2023032001.rohit@student.xavier.ac.in',
-        'from_location': 'Vashi Station',
-        'to_location': 'Xavier Institute of Engineering',
-        'departure_time': '08:00',
-        'date': '2025-10-28',
-        'available_seats': 3,
-        'total_seats': 4,
-        'car_model': 'Honda City',
-        'price_per_seat': 25,
-        'department': 'Computer Engineering',
-        'year': '3rd Year',
-        'rating': 4.5,
-        'phone': '9876543210',
-        'additional_info': 'Pickup near main gate, AC available'
-    },
-    {
-        'id': 2,
-        'driver_name': 'Dr. Priya Patil',
-        'driver_email': 'priya.patil@xavier.ac.in',
-        'from_location': 'Nerul Station',
-        'to_location': 'Xavier Institute of Engineering',
-        'departure_time': '08:15',
-        'date': '2025-10-28',
-        'available_seats': 2,
-        'total_seats': 3,
-        'car_model': 'Maruti Swift',
-        'price_per_seat': 20,
-        'department': 'Electronics & Telecom',
-        'designation': 'Associate Professor',
-        'rating': 4.8,
-        'phone': '9876543211',
-        'additional_info': 'Regular route, music system available'
-    },
-    {
-        'id': 3,
-        'driver_name': 'Arjun Patel',
-        'driver_email': '2023032003.arjun@student.xavier.ac.in',
-        'from_location': 'Belapur Station',
-        'to_location': 'Xavier Institute of Engineering',
-        'departure_time': '07:45',
-        'date': '2025-10-28',
-        'available_seats': 2,
-        'total_seats': 4,
-        'car_model': 'Hyundai i20',
-        'price_per_seat': 30,
-        'department': 'Mechanical Engineering',
-        'year': '2nd Year',
-        'rating': 4.2,
-        'phone': '9876543212',
-        'additional_info': 'Non-smoking car, good music system'
-    },
-    {
-        'id': 4,
-        'driver_name': 'Durvesh Bedre',
-        'driver_email': 'test@student.xavier.ac.in',
-        'from_location': 'Panvel Station',
-        'to_location': 'Xavier Institute of Engineering',
-        'departure_time': '07:30',
-        'date': '2025-10-28',
-        'available_seats': 1,
-        'total_seats': 3,
-        'car_model': 'Toyota Innova',
-        'price_per_seat': 35,
-        'department': 'Electronics & Telecommunication',
-        'year': '4th Year',
-        'rating': 4.7,
-        'phone': '7700090035',
-        'additional_info': 'Comfortable ride, follows traffic rules'
+def save_users_db(users_data):
+    """Save users database to JSON file"""
+    try:
+        with open(USERS_DB_FILE, 'w', encoding='utf-8') as f:
+            json.dump(users_data, f, indent=2, ensure_ascii=False)
+        print(f"✓ Saved {len(users_data)} users to database")
+        return True
+    except Exception as e:
+        print(f"✗ Error saving users database: {e}")
+        return False
+
+def load_rides_db():
+    """Load rides database from JSON file"""
+    try:
+        if os.path.exists(RIDES_DB_FILE):
+            with open(RIDES_DB_FILE, 'r', encoding='utf-8') as f:
+                rides_data = json.load(f)
+                print(f"✓ Loaded {len(rides_data)} rides from database")
+                return rides_data
+        else:
+            print("Creating new rides database...")
+            return get_default_rides()
+    except Exception as e:
+        print(f"✗ Error loading rides database: {e}")
+        return get_default_rides()
+
+def save_rides_db(rides_data):
+    """Save rides database to JSON file"""
+    try:
+        with open(RIDES_DB_FILE, 'w', encoding='utf-8') as f:
+            json.dump(rides_data, f, indent=2, ensure_ascii=False)
+        print(f"✓ Saved {len(rides_data)} rides to database")
+        return True
+    except Exception as e:
+        print(f"✗ Error saving rides database: {e}")
+        return False
+
+def get_default_users():
+    """Get default users for first-time setup"""
+    return {
+        # Test Student Account
+        'test@student.xavier.ac.in': {
+            'name': 'Durvesh Bedre',
+            'email': 'test@student.xavier.ac.in',
+            'password': hashlib.sha256('password123'.encode()).hexdigest(),
+            'phone': '7700090035',
+            'student_id': '2023032002',
+            'department': 'Electronics & Telecommunication Engg',
+            'year': 4,
+            'gender': 'Male',
+            'about': 'Final year ETC student interested in sustainable transportation.',
+            'profile_pic': None,
+            'verified': True,
+            'user_type': 'student'
+        },
+        # Test Staff Account
+        'john.doe@xavier.ac.in': {
+            'name': 'Dr. John Doe',
+            'email': 'john.doe@xavier.ac.in',
+            'password': hashlib.sha256('staff123'.encode()).hexdigest(),
+            'phone': '9876543210',
+            'employee_id': 'XIE001',
+            'department': 'Computer Science Engg',
+            'designation': 'Assistant Professor',
+            'about': 'Assistant Professor in Computer Engineering Department.',
+            'profile_pic': None,
+            'verified': True,
+            'user_type': 'staff',
+            'car_model': 'Honda City',
+            'max_passengers': 3
+        },
+        # Admin Account
+        'admin@student.xavier.ac.in': {
+            'name': 'Admin User',
+            'email': 'admin@student.xavier.ac.in',
+            'password': hashlib.sha256('admin123'.encode()).hexdigest(),
+            'phone': '9876543210',
+            'student_id': '2023000001',
+            'department': 'Computer Science Engg',
+            'year': 4,
+            'gender': 'Male',
+            'about': 'System Administrator',
+            'profile_pic': None,
+            'verified': True,
+            'user_type': 'student'
+        },
+        # Additional Staff Account
+        'priya.patil@xavier.ac.in': {
+            'name': 'Dr. Priya Patil',
+            'email': 'priya.patil@xavier.ac.in',
+            'password': hashlib.sha256('staff123'.encode()).hexdigest(),
+            'phone': '9876543211',
+            'employee_id': 'XIE002',
+            'department': 'Electronics & Telecommunication Engg',
+            'designation': 'Associate Professor',
+            'about': 'Associate Professor in Electronics & Telecom Department.',
+            'profile_pic': None,
+            'verified': True,
+            'user_type': 'staff',
+            'car_model': 'Maruti Swift',
+            'max_passengers': 3
+        }
     }
-]
+
+def get_default_rides():
+    """Get default rides for first-time setup"""
+    return [
+        {
+            'id': 1,
+            'driver_name': 'Rohit Sharma',
+            'driver_email': '2023032001.rohit@student.xavier.ac.in',
+            'from_location': 'Vashi Station',
+            'to_location': 'Xavier Institute of Engineering',
+            'departure_time': '08:00',
+            'date': '2025-10-30',
+            'available_seats': 3,
+            'total_seats': 4,
+            'car_model': 'Honda City',
+            'price_per_seat': 25,
+            'department': 'Computer Engineering',
+            'year': '3rd Year',
+            'rating': 4.5,
+            'phone': '9876543210',
+            'additional_info': 'Pickup near main gate, AC available'
+        },
+        {
+            'id': 2,
+            'driver_name': 'Dr. Priya Patil',
+            'driver_email': 'priya.patil@xavier.ac.in',
+            'from_location': 'Nerul Station',
+            'to_location': 'Xavier Institute of Engineering',
+            'departure_time': '08:15',
+            'date': '2025-10-30',
+            'available_seats': 2,
+            'total_seats': 3,
+            'car_model': 'Maruti Swift',
+            'price_per_seat': 20,
+            'department': 'Electronics & Telecom',
+            'designation': 'Associate Professor',
+            'rating': 4.8,
+            'phone': '9876543211',
+            'additional_info': 'Regular route, music system available'
+        },
+        {
+            'id': 3,
+            'driver_name': 'Arjun Patel',
+            'driver_email': '2023032003.arjun@student.xavier.ac.in',
+            'from_location': 'Belapur Station',
+            'to_location': 'Xavier Institute of Engineering',
+            'departure_time': '07:45',
+            'date': '2025-10-30',
+            'available_seats': 2,
+            'total_seats': 4,
+            'car_model': 'Hyundai i20',
+            'price_per_seat': 30,
+            'department': 'Mechanical Engineering',
+            'year': '2nd Year',
+            'rating': 4.2,
+            'phone': '9876543212',
+            'additional_info': 'Non-smoking car, good music system'
+        },
+        {
+            'id': 4,
+            'driver_name': 'Durvesh Bedre',
+            'driver_email': 'test@student.xavier.ac.in',
+            'from_location': 'Panvel Station',
+            'to_location': 'Xavier Institute of Engineering',
+            'departure_time': '07:30',
+            'date': '2025-10-30',
+            'available_seats': 1,
+            'total_seats': 3,
+            'car_model': 'Toyota Innova',
+            'price_per_seat': 35,
+            'department': 'Electronics & Telecommunication Engg',
+            'year': '4th Year',
+            'rating': 4.7,
+            'phone': '7700090035',
+            'additional_info': 'Comfortable ride, follows traffic rules'
+        }
+    ]
+
+# Initialize persistent databases
+users_db = load_users_db()
+sample_rides = load_rides_db()
 
 class User:
     """Enhanced User class with staff support"""
@@ -344,7 +409,7 @@ def index():
 
 @app.route('/register', methods=['GET', 'POST'])
 def register():
-    """Enhanced user registration with staff support"""
+    """Enhanced user registration with staff support and persistent storage"""
     if request.method == 'POST':
         name = request.form.get('name', '').strip()
         email = request.form.get('email', '').strip().lower()
@@ -411,7 +476,9 @@ def register():
                 'max_passengers': 0
             })
         
+        # Save to persistent database
         users_db[email] = user_data
+        save_users_db(users_db)
         
         print(f"New {user_type} registered: {name} ({email})")
         flash('Registration successful! Please log in with your credentials.', 'success')
@@ -502,7 +569,7 @@ def profile():
 @app.route('/edit_profile', methods=['GET', 'POST'])
 @login_required
 def edit_profile():
-    """Enhanced profile editing with car details for staff"""
+    """Enhanced profile editing with car details for staff and persistent storage"""
     user = User(session['user_email'])
     
     if request.method == 'POST':
@@ -549,6 +616,9 @@ def edit_profile():
                 except Exception as e:
                     flash(f'Error uploading profile picture: {str(e)}', 'error')
         
+        # Save changes to persistent database
+        save_users_db(users_db)
+        
         flash('Profile updated successfully!', 'success')
         return redirect(url_for('profile'))
     
@@ -585,7 +655,7 @@ def find_ride():
 @app.route('/create_ride', methods=['GET', 'POST'])
 @login_required
 def create_ride():
-    """Enhanced create ride with car details"""
+    """Enhanced create ride with car details and persistent storage"""
     user = User(session['user_email'])
     
     if request.method == 'POST':
@@ -639,6 +709,7 @@ def create_ride():
         }
         
         sample_rides.append(new_ride)
+        save_rides_db(sample_rides)  # Save to persistent database
         
         # Update user's car details in profile if they're staff or don't have it set
         if user.user_type == 'staff' or not user.car_model:
@@ -646,6 +717,7 @@ def create_ride():
                 'car_model': car_model,
                 'max_passengers': max_passengers
             })
+            save_users_db(users_db)
         
         print(f"New ride created by {user.name}: {from_location} -> {to_location}")
         flash('Ride created successfully!', 'success')
@@ -668,7 +740,7 @@ def my_rides():
 @app.route('/edit_ride/<int:ride_id>', methods=['GET', 'POST'])
 @login_required
 def edit_ride(ride_id):
-    """Edit a ride - NEW ROUTE"""
+    """Edit a ride with persistent storage"""
     user = User(session['user_email'])
     
     # Find the ride
@@ -715,6 +787,9 @@ def edit_ride(ride_id):
             'additional_info': additional_info or 'No additional information provided'
         })
         
+        # Save changes to persistent database
+        save_rides_db(sample_rides)
+        
         flash('Ride updated successfully!', 'success')
         return redirect(url_for('my_rides'))
     
@@ -723,7 +798,7 @@ def edit_ride(ride_id):
 @app.route('/book_ride/<int:ride_id>')
 @login_required
 def book_ride(ride_id):
-    """Enhanced ride booking"""
+    """Enhanced ride booking with persistent storage"""
     user = User(session['user_email'])
     
     # Find the ride
@@ -743,6 +818,7 @@ def book_ride(ride_id):
     
     # Book the ride (in a real app, this would be stored in a bookings table)
     ride['available_seats'] -= 1
+    save_rides_db(sample_rides)  # Save changes to persistent database
     
     flash(f'Successfully booked ride from {ride["from_location"]} to {ride["to_location"]}!', 'success')
     return redirect(url_for('find_ride'))
@@ -750,7 +826,7 @@ def book_ride(ride_id):
 @app.route('/cancel_ride/<int:ride_id>')
 @login_required
 def cancel_ride(ride_id):
-    """Cancel a ride - Enhanced with proper deletion"""
+    """Cancel a ride - Enhanced with proper deletion and persistent storage"""
     user = User(session['user_email'])
     
     # Find and remove the ride
@@ -759,6 +835,7 @@ def cancel_ride(ride_id):
     
     if ride:
         sample_rides = [r for r in sample_rides if r['id'] != ride_id]
+        save_rides_db(sample_rides)  # Save changes to persistent database
         print(f"Ride deleted by {user.name}: {ride['from_location']} -> {ride['to_location']}")
         flash('Ride cancelled successfully.', 'success')
     else:
@@ -785,14 +862,18 @@ def internal_error(error):
 
 if __name__ == '__main__':
     print("=" * 60)
-    print(" LIFTLINK CARPOOL - ENHANCED VERSION 8.0")
+    print(" LIFTLINK CARPOOL - ENHANCED VERSION 8.1")
     print("=" * 60)
     print("Local URL: http://127.0.0.1:5000")
     print("Network URL: http://localhost:5000")
     print("Xavier's Institute of Engineering")
-    print("Sustainable Commute Hub - All Issues Fixed!")
+    print("Sustainable Commute Hub - PERSISTENT USER STORAGE!")
     print("=" * 60)
     print("✅ ENHANCED FEATURES:")
+    print("- 🔒 PERSISTENT USER REGISTRATION (No more re-registering!)")
+    print("- 💾 FILE-BASED USER & RIDES STORAGE")
+    print("- 🔄 AUTO-SAVE ON ALL CHANGES")
+    print("- 🚀 SURVIVES SERVER RESTARTS")
     print("- Clean Navigation (Dashboard/Profile/Logout boxes)")
     print("- XIE Logo in Header")
     print("- Fixed Find Ride Search (Method Not Allowed resolved)")
@@ -809,7 +890,7 @@ if __name__ == '__main__':
     print("- Ride Booking System")
     
     print(f"- Sample Routes: {len(sample_rides)} rides loaded")
-    print(f"- Test Users: {len(users_db)} users available")
+    print(f"- Registered Users: {len(users_db)} users available")
     print("=" * 60)
     print("🔐 TEST LOGIN CREDENTIALS:")
     print("Student - Email: test@student.xavier.ac.in")
@@ -817,16 +898,12 @@ if __name__ == '__main__':
     print("Additional Staff - Email: priya.patil@xavier.ac.in")
     print("Password: password123 / staff123")
     print("=" * 60)
-    print("🎯 ALL 9 ISSUES FIXED:")
-    print("1. ✅ Navigation cleaned & boxed")
-    print("2. ✅ XIE logo added to header")
-    print("3. ✅ Find ride Method Not Allowed fixed")
-    print("4. ✅ My Rides edit/delete working")
-    print("5. ✅ Earnings moved to profile")
-    print("6. ✅ Navigation boxes separated")
-    print("7. ✅ Animated bubbles background")
-    print("8. ✅ Enhanced LiftLink typography")
-    print("9. ✅ Find ride search fully working")
+    print("💾 DATABASE FILES:")
+    print(f"- Users: {USERS_DB_FILE}")
+    print(f"- Rides: {RIDES_DB_FILE}")
+    print("=" * 60)
+    print("🎉 FIXED ISSUE: Users only need to register ONCE!")
+    print("✅ Data persists after logout & server restart!")
     print("=" * 60)
     
     app.run(host='0.0.0.0', port=5000, debug=True, use_reloader=True, threaded=True)
