@@ -418,24 +418,61 @@
             text-decoration: none;
         }
 
+        /* Enhanced No Rides Section */
         .no-rides {
             text-align: center;
             padding: 4rem 2rem;
             background: rgba(30, 30, 30, 0.8);
             border-radius: 20px;
             border: 1px solid rgba(255, 255, 255, 0.1);
+            margin: 2rem 0;
+            backdrop-filter: blur(10px);
         }
 
-        .no-rides-icon {
+        .no-rides-animation {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 1rem;
+            margin-bottom: 2rem;
             font-size: 4rem;
-            margin-bottom: 1rem;
+        }
+
+        .car-icon {
+            animation: drive 2s ease-in-out infinite;
+        }
+
+        .dust-icon {
+            animation: floatDust 2s ease-in-out infinite;
             opacity: 0.7;
         }
 
+        @keyframes drive {
+            0%, 100% { transform: translateX(0px); }
+            50% { transform: translateX(15px); }
+        }
+
+        @keyframes floatDust {
+            0%, 100% { transform: translateY(0px) scale(1); opacity: 0.7; }
+            50% { transform: translateY(-8px) scale(1.2); opacity: 0.4; }
+        }
+
+        .no-rides-title {
+            font-family: 'Poppins', sans-serif;
+            font-size: 1.8rem;
+            color: var(--text-primary);
+            margin-bottom: 1rem;
+            font-weight: 600;
+        }
+
         .no-rides-text {
-            font-size: 1.2rem;
+            font-size: 1.1rem;
             color: var(--text-secondary);
-            margin-bottom: 2rem;
+            margin-bottom: 2.5rem;
+            line-height: 1.6;
+            max-width: 500px;
+            margin-left: auto;
+            margin-right: auto;
         }
 
         .btn-create {
@@ -447,6 +484,10 @@
             font-weight: 600;
             text-decoration: none;
             transition: all 0.3s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 1.1rem;
         }
 
         .btn-create:hover {
@@ -478,6 +519,14 @@
             .nav-box {
                 padding: 0.5rem 1rem;
                 font-size: 0.9rem;
+            }
+
+            .no-rides-animation {
+                font-size: 3rem;
+            }
+
+            .no-rides-title {
+                font-size: 1.5rem;
             }
         }
     </style>
@@ -643,15 +692,22 @@
                     {% endfor %}
                 </div>
             {% else %}
+                <!-- Enhanced No Rides Available Section -->
                 <div class="no-rides">
-                    <div class="no-rides-icon">🚗💨</div>
+                    <div class="no-rides-animation">
+                        <span class="car-icon">🚗</span>
+                        <span class="dust-icon">💨</span>
+                    </div>
+                    <div class="no-rides-title">
+                        Sorry, No Rides Available! 😔
+                    </div>
                     <div class="no-rides-text">
                         {% if search_from or search_to or search_date %}
                             No rides found matching your search criteria.<br>
-                            Try adjusting your filters or create a new ride!
+                            Try adjusting your filters or check back later for new rides.
                         {% else %}
-                            No rides are currently available.<br>
-                            Be the first to offer a ride to your fellow students!
+                            No rides are currently available for today.<br>
+                            Be the first to offer a ride and help your fellow students!
                         {% endif %}
                     </div>
                     <a href="{{ url_for('create_ride') }}" class="btn-create">
