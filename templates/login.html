@@ -5,453 +5,189 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Login - LiftLink Carpool</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
-    <!-- Professional Google Fonts -->
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <style>
-        :root {
-            --bg-primary: #121212;
-            --bg-secondary: #1e1e1e;
-            --bg-tertiary: #2d2d2d;
-            --text-primary: #ffffff;
-            --text-secondary: #b3b3b3;
-            --accent: #667eea;
-            --accent-hover: #5a67d8;
-        }
-
         body {
-            background: linear-gradient(135deg, #121212 0%, #1e1e1e 50%, #2d2d2d 100%);
-            color: var(--text-primary);
-            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             min-height: 100vh;
             display: flex;
             align-items: center;
-            justify-content: center;
-            padding: 20px;
-            position: relative;
-            overflow-x: hidden;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
         }
-
-        /* Enhanced Glowing Background Effect */
-        body::before {
-            content: '';
-            position: fixed;
-            top: -50%;
-            left: -50%;
-            width: 200%;
-            height: 200%;
-            background: 
-                radial-gradient(circle at 25% 25%, rgba(102, 126, 234, 0.15) 0%, transparent 50%),
-                radial-gradient(circle at 75% 75%, rgba(118, 75, 162, 0.15) 0%, transparent 50%);
-            animation: pulseGlow 6s ease-in-out infinite alternate;
-            z-index: -2;
-        }
-
-        body::after {
-            content: '';
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: radial-gradient(circle at 50% 50%, rgba(102, 126, 234, 0.05) 0%, transparent 70%);
-            animation: rotateGlow 12s linear infinite;
-            z-index: -1;
-        }
-
-        @keyframes pulseGlow {
-            0% { transform: scale(0.8) rotate(0deg); opacity: 0.4; }
-            100% { transform: scale(1.2) rotate(180deg); opacity: 0.8; }
-        }
-
-        @keyframes rotateGlow {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
-
+        
         .login-container {
-            width: 100%;
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            padding: 2rem;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            backdrop-filter: blur(10px);
             max-width: 450px;
-            margin: 0 auto;
-            z-index: 1;
+            width: 100%;
         }
-
-        .logo-container {
+        
+        .logo {
             text-align: center;
             margin-bottom: 2rem;
         }
-
-        .logo {
-            width: 100px;
-            height: 100px;
-            border-radius: 20px;
-            margin-bottom: 1.5rem;
-            box-shadow: 0 8px 32px rgba(102, 126, 234, 0.3);
-            border: 2px solid rgba(102, 126, 234, 0.2);
-            object-fit: cover;
-        }
-
-        .welcome-text {
-            font-family: 'Poppins', sans-serif;
-            font-size: 2rem;
-            font-weight: 600;
-            margin-bottom: 0.5rem;
-            letter-spacing: -0.5px;
-        }
-
-        .gradient-text {
+        
+        .logo h1 {
+            font-size: 2.5rem;
+            font-weight: bold;
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
-            background-clip: text;
-            font-weight: 700;
+            margin-bottom: 0.5rem;
         }
-
-        .subtitle {
-            color: var(--text-secondary);
-            font-size: 1rem;
-            margin-bottom: 2rem;
-            font-weight: 400;
-        }
-
-        /* Enhanced User Type Toggle */
-        .user-type-toggle {
-            display: flex;
-            background: rgba(45, 45, 45, 0.8);
-            border-radius: 15px;
-            padding: 4px;
-            margin-bottom: 2rem;
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            backdrop-filter: blur(10px);
-        }
-
-        .toggle-option {
-            flex: 1;
-            padding: 12px 20px;
+        
+        .captcha-container {
             text-align: center;
-            border-radius: 12px;
-            color: var(--text-secondary);
+            margin: 1rem 0;
+        }
+        
+        .captcha-image {
+            border: 2px solid #667eea;
+            border-radius: 8px;
+            margin-bottom: 0.5rem;
             cursor: pointer;
-            transition: all 0.3s ease;
-            font-weight: 500;
-            font-family: 'Inter', sans-serif;
-            position: relative;
-            overflow: hidden;
+            max-width: 200px;
         }
-
-        .toggle-option::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: linear-gradient(135deg, var(--accent) 0%, var(--accent-hover) 100%);
-            opacity: 0;
-            transition: opacity 0.3s ease;
-            z-index: -1;
+        
+        .btn-refresh-captcha {
+            background: none;
+            border: none;
+            color: #667eea;
+            text-decoration: underline;
+            font-size: 0.9rem;
         }
-
-        .toggle-option.active {
-            color: white;
-            transform: scale(1.02);
-            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
-        }
-
-        .toggle-option.active::before {
-            opacity: 1;
-        }
-
-        .toggle-option:hover:not(.active) {
-            color: var(--accent);
-            background: rgba(102, 126, 234, 0.1);
-        }
-
-        .login-card {
-            background: rgba(30, 30, 30, 0.8);
-            backdrop-filter: blur(20px);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            border-radius: 20px;
-            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.4);
-            padding: 2.5rem;
-        }
-
-        .form-label {
-            color: var(--text-primary);
-            font-weight: 500;
-            margin-bottom: 0.8rem;
-            font-size: 0.95rem;
-        }
-
-        .form-control {
-            background: rgba(45, 45, 45, 0.8);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            color: var(--text-primary);
-            border-radius: 12px;
-            padding: 1rem 1.25rem;
-            font-size: 1rem;
-            transition: all 0.3s ease;
-            font-family: 'Inter', sans-serif;
-        }
-
+        
         .form-control:focus {
-            background: rgba(45, 45, 45, 0.9);
-            border-color: var(--accent);
-            color: var(--text-primary);
+            border-color: #667eea;
             box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25);
         }
-
-        .form-control::placeholder {
-            color: var(--text-secondary);
-            font-weight: 400;
-        }
-
-        .form-text {
-            color: var(--text-secondary);
-            font-size: 0.8rem;
-            margin-top: 0.5rem;
-        }
-
-        .btn-primary {
-            background: linear-gradient(135deg, var(--accent) 0%, var(--accent-hover) 100%);
+        
+        .btn-login {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             border: none;
-            border-radius: 12px;
-            padding: 1rem 2rem;
+            padding: 12px;
             font-weight: 600;
-            font-family: 'Inter', sans-serif;
-            font-size: 1rem;
-            transition: all 0.3s ease;
-            width: 100%;
-            position: relative;
-            overflow: hidden;
         }
-
-        .btn-primary::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: -100%;
-            width: 100%;
-            height: 100%;
-            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
-            transition: left 0.5s;
-        }
-
-        .btn-primary:hover {
+        
+        .btn-login:hover {
             transform: translateY(-2px);
             box-shadow: 0 8px 25px rgba(102, 126, 234, 0.4);
         }
-
-        .btn-primary:hover::before {
-            left: 100%;
-        }
-
-        .register-link {
-            text-align: center;
-            margin-top: 1.5rem;
-            color: var(--text-secondary);
-        }
-
-        .register-link a {
-            color: var(--accent);
-            text-decoration: none;
-            font-weight: 500;
-            transition: color 0.3s ease;
-        }
-
-        .register-link a:hover {
-            color: var(--accent-hover);
-            text-decoration: underline;
-        }
-
+        
         .alert {
-            border-radius: 12px;
+            border-radius: 10px;
             border: none;
-            margin-bottom: 1.5rem;
-            backdrop-filter: blur(10px);
-        }
-
-        .alert-success {
-            background: rgba(16, 185, 129, 0.2);
-            color: #10b981;
-            border-left: 4px solid #10b981;
-        }
-
-        .alert-danger {
-            background: rgba(220, 53, 69, 0.2);
-            color: #dc3545;
-            border-left: 4px solid #dc3545;
-        }
-
-        @media (max-width: 576px) {
-            .login-card {
-                padding: 2rem 1.5rem;
-                margin: 1rem;
-            }
-            .welcome-text {
-                font-size: 1.75rem;
-            }
-            .logo {
-                width: 80px;
-                height: 80px;
-            }
-            .toggle-option {
-                padding: 10px 16px;
-                font-size: 0.9rem;
-            }
         }
     </style>
 </head>
 <body>
-    <div class="login-container">
-        <!-- Logo and Welcome Section -->
-        <div class="logo-container">
-            <img src="{{ url_for('static', filename='images/xie_logo.jpg') }}" alt="Xavier Institute Logo" class="logo">
-            <h1 class="welcome-text">Welcome to <span class="gradient-text">LiftLink</span></h1>
-            <p class="subtitle">Xavier's Institute of Engineering - Sustainable Carpool System</p>
-        </div>
-
-        <!-- Login Card -->
-        <div class="login-card">
-            <!-- Flash Messages -->
-            {% with messages = get_flashed_messages(with_categories=true) %}
-                {% if messages %}
-                    {% for category, message in messages %}
-                        <div class="alert alert-{{ 'danger' if category == 'error' else category }} alert-dismissible fade show" role="alert">
-                            {{ message }}
-                            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    <div class="container">
+        <div class="row justify-content-center">
+            <div class="col-md-6">
+                <div class="login-container">
+                    <div class="logo">
+                        <h1>🚗 LiftLink</h1>
+                        <p class="text-muted">Xavier Institute of Engineering</p>
+                    </div>
+                    
+                    {% with messages = get_flashed_messages(with_categories=true) %}
+                        {% if messages %}
+                            {% for category, message in messages %}
+                                <div class="alert alert-{{ 'danger' if category == 'error' else 'success' }} alert-dismissible fade show">
+                                    {{ message|safe }}
+                                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                                </div>
+                            {% endfor %}
+                        {% endif %}
+                    {% endwith %}
+                    
+                    <form method="POST" id="loginForm">
+                        <div class="mb-3">
+                            <label for="email" class="form-label">📧 Institutional Email</label>
+                            <input type="email" class="form-control" id="email" name="email" required
+                                   placeholder="your.name@student.xavier.ac.in">
+                            <div class="form-text">Use your Xavier Institute email address</div>
                         </div>
-                    {% endfor %}
-                {% endif %}
-            {% endwith %}
-
-            <!-- Enhanced User Type Toggle -->
-            <div class="user-type-toggle">
-                <div class="toggle-option active" data-type="student">
-                    👨‍🎓 Student
-                </div>
-                <div class="toggle-option" data-type="staff">
-                    👨‍🏫 Staff
-                </div>
-            </div>
-
-            <!-- Login Form -->
-            <form method="POST" action="{{ url_for('login') }}">
-                <input type="hidden" name="user_type" id="user_type" value="student">
-                
-                <div class="mb-3">
-                    <label for="email" class="form-label">Xavier Institute Email</label>
-                    <input type="email" class="form-control" id="email" name="email" 
-                           placeholder="Enter your institute email" required>
-                    <div class="form-text">
-                        <span id="email-hint">Students: use @student.xavier.ac.in</span>
+                        
+                        <div class="mb-3">
+                            <label for="password" class="form-label">🔒 Password</label>
+                            <input type="password" class="form-control" id="password" name="password" required
+                                   placeholder="Enter your password">
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label class="form-label">🔐 Security Verification</label>
+                            <div class="captcha-container">
+                                <img id="captcha-image" class="captcha-image" onclick="refreshCaptcha()" alt="CAPTCHA">
+                                <br>
+                                <button type="button" class="btn-refresh-captcha" onclick="refreshCaptcha()">
+                                    🔄 Refresh CAPTCHA
+                                </button>
+                            </div>
+                            <input type="text" class="form-control" id="captcha" name="captcha" required
+                                   placeholder="Enter CAPTCHA code" maxlength="5" style="text-transform: uppercase;">
+                            <div class="form-text">Click image to refresh if unclear</div>
+                        </div>
+                        
+                        <button type="submit" class="btn btn-primary btn-login w-100 mb-3">
+                            🚪 Login to LiftLink
+                        </button>
+                    </form>
+                    
+                    <div class="text-center">
+                        <p class="mb-0">Don't have an account?</p>
+                        <a href="{{ url_for('register') }}" class="text-decoration-none">
+                            ➕ Register for LiftLink
+                        </a>
                     </div>
                 </div>
-                
-                <div class="mb-4">
-                    <label for="password" class="form-label">Password</label>
-                    <input type="password" class="form-control" id="password" name="password" 
-                           placeholder="Enter your password" required>
-                </div>
-                
-                <button type="submit" class="btn btn-primary">
-                    🚗 Login to LiftLink
-                </button>
-            </form>
-
-            <!-- Register Link -->
-            <div class="register-link">
-                Don't have an account? <a href="{{ url_for('register') }}">Register here</a>
             </div>
         </div>
     </div>
-
+    
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
     <script>
+        // Load CAPTCHA on page load
         document.addEventListener('DOMContentLoaded', function() {
-            const toggleOptions = document.querySelectorAll('.toggle-option');
-            const userTypeInput = document.getElementById('user_type');
-            const emailHint = document.getElementById('email-hint');
-            const emailInput = document.getElementById('email');
-
-            // Handle user type toggle
-            toggleOptions.forEach(option => {
-                option.addEventListener('click', function() {
-                    // Remove active from all options
-                    toggleOptions.forEach(opt => opt.classList.remove('active'));
-                    // Add active to clicked option
-                    this.classList.add('active');
-                    
-                    const userType = this.getAttribute('data-type');
-                    userTypeInput.value = userType;
-                    
-                    // Update email hint and placeholder
-                    if (userType === 'student') {
-                        emailHint.textContent = 'Students: use @student.xavier.ac.in';
-                        emailInput.placeholder = 'your.name@student.xavier.ac.in';
-                    } else {
-                        emailHint.textContent = 'Staff: use @xavier.ac.in';
-                        emailInput.placeholder = 'your.name@xavier.ac.in';
-                    }
+            refreshCaptcha();
+        });
+        
+        function refreshCaptcha() {
+            fetch('/captcha')
+                .then(response => response.json())
+                .then(data => {
+                    document.getElementById('captcha-image').src = data.image;
+                    document.getElementById('captcha').value = '';
+                })
+                .catch(error => {
+                    console.error('Error refreshing CAPTCHA:', error);
+                    alert('Failed to load CAPTCHA. Please refresh the page.');
                 });
-            });
-
-            // Enhanced form validation
-            const form = document.querySelector('form');
-            form.addEventListener('submit', function(e) {
-                const email = emailInput.value.trim().toLowerCase();
-                const userType = userTypeInput.value;
-                
-                // Validate email domain based on user type
-                if (userType === 'student' && !email.endsWith('@student.xavier.ac.in')) {
-                    e.preventDefault();
-                    showError('Students must use @student.xavier.ac.in email address');
-                    return false;
-                }
-                
-                if (userType === 'staff' && !email.endsWith('@xavier.ac.in')) {
-                    e.preventDefault();
-                    showError('Staff must use @xavier.ac.in email address');
-                    return false;
-                }
-
-                // Show loading state
-                const submitBtn = form.querySelector('.btn-primary');
-                submitBtn.innerHTML = '🔄 Logging in...';
-                submitBtn.disabled = true;
-            });
-
-            // Helper function to show errors
-            function showError(message) {
-                // Remove existing alerts
-                const existingAlerts = document.querySelectorAll('.alert');
-                existingAlerts.forEach(alert => alert.remove());
-                
-                // Create new alert
-                const alertDiv = document.createElement('div');
-                alertDiv.className = 'alert alert-danger alert-dismissible fade show';
-                alertDiv.innerHTML = `
-                    ${message}
-                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-                `;
-                
-                // Insert at top of form
-                const form = document.querySelector('form');
-                form.insertBefore(alertDiv, form.firstChild);
+        }
+        
+        // Auto-uppercase CAPTCHA input
+        document.getElementById('captcha').addEventListener('input', function() {
+            this.value = this.value.toUpperCase();
+        });
+        
+        // Form validation
+        document.getElementById('loginForm').addEventListener('submit', function(e) {
+            const email = document.getElementById('email').value;
+            const captcha = document.getElementById('captcha').value;
+            
+            if (!email.includes('@student.xavier.ac.in') && !email.includes('@xavier.ac.in')) {
+                alert('❌ Please use your Xavier Institute email address!');
+                e.preventDefault();
+                return;
             }
-
-            // Auto-fill email based on user type for demo
-            emailInput.addEventListener('focus', function() {
-                if (this.value === '') {
-                    const userType = userTypeInput.value;
-                    if (userType === 'student') {
-                        this.placeholder = 'test@student.xavier.ac.in';
-                    } else {
-                        this.placeholder = 'john.doe@xavier.ac.in';
-                    }
-                }
-            });
+            
+            if (captcha.length !== 5) {
+                alert('❌ Please enter the 5-character CAPTCHA code!');
+                e.preventDefault();
+                return;
+            }
         });
     </script>
 </body>
