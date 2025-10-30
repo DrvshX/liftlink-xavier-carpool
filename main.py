@@ -1,11 +1,12 @@
-# LiftLink Carpool - Enhanced Flask Web Application with Full Ride Sharing
+# LiftLink Carpool - Enhanced Flask Web Application with WhatsApp, Maps & Earnings History
 # Spyder Compatible - Xavier's Institute of Engineering - Sustainable Commute Hub
-# Version 8.2 - FIXED: Users can now see and book rides from other users
+# Version 9.0 - Advanced Communication & Earnings Features
 
 import os
 import sys
 import json
-from flask import Flask, render_template, request, redirect, url_for, flash, session, send_from_directory
+import urllib.parse
+from flask import Flask, render_template, request, redirect, url_for, flash, session, send_from_directory, jsonify
 from werkzeug.utils import secure_filename
 from functools import wraps
 import hashlib
@@ -26,7 +27,7 @@ os.chdir(script_dir)
 
 # Debug info
 print("=" * 60)
-print(" LIFTLINK CARPOOL - ENHANCED VERSION 8.2")
+print(" LIFTLINK CARPOOL - ENHANCED VERSION 9.0")
 print("=" * 60)
 print(f"Current directory: {os.getcwd()}")
 print(f"Templates exist: {os.path.exists('templates')}")
@@ -42,7 +43,7 @@ print("=" * 60)
 
 # Initialize Flask app
 app = Flask(__name__)
-app.secret_key = 'xie-liftlink-secretkey-2025-enhanced-v8'
+app.secret_key = 'xie-liftlink-secretkey-2025-enhanced-v9'
 
 # Profile Picture Configuration
 UPLOAD_FOLDER = 'static/uploads/profilepics'
@@ -60,6 +61,8 @@ app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024  # 16MB max file size
 # File paths for persistent storage
 USERS_DB_FILE = 'data/users_db.json'
 RIDES_DB_FILE = 'data/rides_db.json'
+BOOKINGS_DB_FILE = 'data/bookings_db.json'
+EARNINGS_DB_FILE = 'data/earnings_db.json'
 
 # Profile Picture Helper Functions
 def allowed_file(filename):
@@ -156,6 +159,58 @@ def save_rides_db(rides_data):
         print(f"✗ Error saving rides database: {e}")
         return False
 
+def load_bookings_db():
+    """Load bookings database from JSON file"""
+    try:
+        if os.path.exists(BOOKINGS_DB_FILE):
+            with open(BOOKINGS_DB_FILE, 'r', encoding='utf-8') as f:
+                bookings_data = json.load(f)
+                print(f"✓ Loaded {len(bookings_data)} bookings from database")
+                return bookings_data
+        else:
+            print("Creating new bookings database...")
+            return []
+    except Exception as e:
+        print(f"✗ Error loading bookings database: {e}")
+        return []
+
+def save_bookings_db(bookings_data):
+    """Save bookings database to JSON file"""
+    try:
+        with open(BOOKINGS_DB_FILE, 'w', encoding='utf-8') as f:
+            json.dump(bookings_data, f, indent=2, ensure_ascii=False)
+        print(f"✓ Saved {len(bookings_data)} bookings to database")
+        return True
+    except Exception as e:
+        print(f"✗ Error saving bookings database: {e}")
+        return False
+
+def load_earnings_db():
+    """Load earnings database from JSON file"""
+    try:
+        if os.path.exists(EARNINGS_DB_FILE):
+            with open(EARNINGS_DB_FILE, 'r', encoding='utf-8') as f:
+                earnings_data = json.load(f)
+                print(f"✓ Loaded earnings data from database")
+                return earnings_data
+        else:
+            print("Creating new earnings database...")
+            return {}
+    except Exception as e:
+        print(f"✗ Error loading earnings database: {e}")
+        return {}
+
+def save_earnings_db(earnings_data):
+    """Save earnings database to JSON file"""
+    try:
+        with open(EARNINGS_DB_FILE, 'w', encoding='utf-8') as f:
+            json.dump(earnings_data, f, indent=2, ensure_ascii=False)
+        print(f"✓ Saved earnings data to database")
+        return True
+    except Exception as e:
+        print(f"✗ Error saving earnings database: {e}")
+        return False
+
 def get_default_users():
     """Get default users for first-time setup"""
     return {
@@ -189,37 +244,6 @@ def get_default_users():
             'user_type': 'staff',
             'car_model': 'Honda City',
             'max_passengers': 3
-        },
-        # Admin Account
-        'admin@student.xavier.ac.in': {
-            'name': 'Admin User',
-            'email': 'admin@student.xavier.ac.in',
-            'password': hashlib.sha256('admin123'.encode()).hexdigest(),
-            'phone': '9876543210',
-            'student_id': '2023000001',
-            'department': 'Computer Science Engg',
-            'year': 4,
-            'gender': 'Male',
-            'about': 'System Administrator',
-            'profile_pic': None,
-            'verified': True,
-            'user_type': 'student'
-        },
-        # Additional Staff Account
-        'priya.patil@xavier.ac.in': {
-            'name': 'Dr. Priya Patil',
-            'email': 'priya.patil@xavier.ac.in',
-            'password': hashlib.sha256('staff123'.encode()).hexdigest(),
-            'phone': '9876543211',
-            'employee_id': 'XIE002',
-            'department': 'Electronics & Telecommunication Engg',
-            'designation': 'Associate Professor',
-            'about': 'Associate Professor in Electronics & Telecom Department.',
-            'profile_pic': None,
-            'verified': True,
-            'user_type': 'staff',
-            'car_model': 'Maruti Swift',
-            'max_passengers': 3
         }
     }
 
@@ -229,45 +253,29 @@ def get_default_rides():
     return [
         {
             'id': 1,
-            'driver_name': 'Rohit Sharma',
-            'driver_email': '2023032001.rohit@student.xavier.ac.in',
-            'from_location': 'Vashi Station',
-            'to_location': 'Xavier Institute of Engineering',
+            'driver_name': 'Durvesh Bedre',
+            'driver_email': 'test@student.xavier.ac.in',
+            'from_location': 'Dadar Railway Station',
+            'to_location': 'Xavier Institute of Engineering, Mahim',
             'departure_time': '08:00',
             'date': today,
             'available_seats': 3,
             'total_seats': 4,
             'car_model': 'Honda City',
             'price_per_seat': 25,
-            'department': 'Computer Engineering',
-            'year': '3rd Year',
+            'department': 'Electronics & Telecommunication Engg',
+            'year': '4th Year',
             'rating': 4.5,
-            'phone': '9876543210',
+            'phone': '7700090035',
             'additional_info': 'Pickup near main gate, AC available'
-        },
-        {
-            'id': 2,
-            'driver_name': 'Dr. Priya Patil',
-            'driver_email': 'priya.patil@xavier.ac.in',
-            'from_location': 'Nerul Station',
-            'to_location': 'Xavier Institute of Engineering',
-            'departure_time': '08:15',
-            'date': today,
-            'available_seats': 2,
-            'total_seats': 3,
-            'car_model': 'Maruti Swift',
-            'price_per_seat': 20,
-            'department': 'Electronics & Telecom',
-            'designation': 'Associate Professor',
-            'rating': 4.8,
-            'phone': '9876543211',
-            'additional_info': 'Regular route, music system available'
         }
     ]
 
 # Initialize persistent databases
 users_db = load_users_db()
 sample_rides = load_rides_db()
+bookings_db = load_bookings_db()
+earnings_db = load_earnings_db()
 
 class User:
     """Enhanced User class with staff support"""
@@ -358,6 +366,49 @@ def login_required(f):
         
         return f(*args, **kwargs)
     return decorated_function
+
+# Communication Helper Functions
+def generate_whatsapp_url(phone, message):
+    """Generate WhatsApp URL with pre-filled message"""
+    # Remove any non-digit characters and ensure proper format
+    phone_clean = ''.join(filter(str.isdigit, phone))
+    if phone_clean.startswith('0'):
+        phone_clean = '91' + phone_clean[1:]
+    elif not phone_clean.startswith('91'):
+        phone_clean = '91' + phone_clean
+    
+    encoded_message = urllib.parse.quote(message)
+    whatsapp_url = f"https://wa.me/{phone_clean}?text={encoded_message}"
+    return whatsapp_url
+
+def generate_maps_url(from_location, to_location):
+    """Generate Google Maps URL for route"""
+    encoded_from = urllib.parse.quote(from_location)
+    encoded_to = urllib.parse.quote(to_location)
+    maps_url = f"https://www.google.com/maps/dir/{encoded_from}/{encoded_to}"
+    return maps_url
+
+def add_earning_record(driver_email, passenger_name, passenger_email, amount, ride_details):
+    """Add earning record to earnings history"""
+    if driver_email not in earnings_db:
+        earnings_db[driver_email] = []
+    
+    earning_record = {
+        'id': len(earnings_db.get(driver_email, [])) + 1,
+        'passenger_name': passenger_name,
+        'passenger_email': passenger_email,
+        'amount': amount,
+        'date': datetime.now().strftime('%Y-%m-%d'),
+        'time': datetime.now().strftime('%H:%M'),
+        'ride_from': ride_details['from_location'],
+        'ride_to': ride_details['to_location'],
+        'ride_date': ride_details['date'],
+        'ride_time': ride_details['departure_time']
+    }
+    
+    earnings_db[driver_email].append(earning_record)
+    save_earnings_db(earnings_db)
+    print(f"💰 Earning recorded: {driver_email} earned ₹{amount} from {passenger_name}")
 
 # Static file serving for uploaded images
 @app.route('/static/uploads/profilepics/<filename>')
@@ -517,7 +568,7 @@ def dashboard():
 @app.route('/profile')
 @login_required
 def profile():
-    """Enhanced profile page with earnings stats"""
+    """Enhanced profile page with earnings stats and history"""
     user = User(session['user_email'])
     
     # Calculate user's ride statistics for profile
@@ -529,7 +580,11 @@ def profile():
         'total_earnings': sum(ride['price_per_seat'] * (ride['total_seats'] - ride['available_seats']) for ride in user_rides)
     }
     
-    return render_template('profile.html', user=user, stats=stats)
+    # Get earnings history
+    earnings_history = earnings_db.get(user.email, [])
+    earnings_history.sort(key=lambda x: (x['date'], x['time']), reverse=True)
+    
+    return render_template('profile.html', user=user, stats=stats, earnings_history=earnings_history)
 
 @app.route('/edit_profile', methods=['GET', 'POST'])
 @login_required
@@ -592,7 +647,7 @@ def edit_profile():
 @app.route('/find_ride', methods=['GET'])
 @login_required
 def find_ride():
-    """FIXED: Enhanced find ride that shows ALL rides from OTHER users"""
+    """Enhanced find ride that shows ALL rides from OTHER users"""
     user = User(session['user_email'])
     search_from = request.args.get('from', '').strip()
     search_to = request.args.get('to', '').strip()
@@ -623,9 +678,21 @@ def find_ride():
     rides = [r for r in rides if r['available_seats'] > 0]
     print(f"💺 After seat availability filter: {len(rides)} rides")
     
-    # IMPORTANT: Show rides from OTHER users (not your own rides in find section)
+    # Show rides from OTHER users (not your own rides in find section)
     rides = [r for r in rides if r['driver_email'] != user.email]
     print(f"👥 After removing own rides: {len(rides)} rides")
+    
+    # Add communication URLs to each ride
+    for ride in rides:
+        # WhatsApp message
+        whatsapp_message = f"Hi {ride['driver_name']}, I'm interested in your ride from {ride['from_location']} to {ride['to_location']} on {ride['date']} at {ride['departure_time']}. Can we coordinate for pickup?"
+        ride['whatsapp_url'] = generate_whatsapp_url(ride['phone'], whatsapp_message)
+        
+        # Maps URL for route
+        ride['maps_url'] = generate_maps_url(ride['from_location'], ride['to_location'])
+        
+        # Phone call URL
+        ride['call_url'] = f"tel:{ride['phone']}"
     
     # Debug: Print all rides for troubleshooting
     print(f"🚗 Final rides to display:")
@@ -791,7 +858,7 @@ def edit_ride(ride_id):
 @app.route('/book_ride/<int:ride_id>')
 @login_required
 def book_ride(ride_id):
-    """Enhanced ride booking with persistent storage and notifications"""
+    """Enhanced ride booking with WhatsApp, Maps, Call integration and earnings tracking"""
     user = User(session['user_email'])
     
     # Find the ride
@@ -811,10 +878,81 @@ def book_ride(ride_id):
     
     # Book the ride (decrease available seats)
     ride['available_seats'] -= 1
-    save_rides_db(sample_rides)  # Save changes to persistent database
+    
+    # Create booking record
+    booking = {
+        'id': len(bookings_db) + 1,
+        'ride_id': ride_id,
+        'passenger_name': user.name,
+        'passenger_email': user.email,
+        'passenger_phone': user.phone,
+        'driver_name': ride['driver_name'],
+        'driver_email': ride['driver_email'],
+        'driver_phone': ride['phone'],
+        'from_location': ride['from_location'],
+        'to_location': ride['to_location'],
+        'date': ride['date'],
+        'departure_time': ride['departure_time'],
+        'price_paid': ride['price_per_seat'],
+        'booking_time': datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
+        'status': 'confirmed'
+    }
+    
+    bookings_db.append(booking)
+    
+    # Add earning record for driver
+    add_earning_record(
+        driver_email=ride['driver_email'],
+        passenger_name=user.name,
+        passenger_email=user.email,
+        amount=ride['price_per_seat'],
+        ride_details=ride
+    )
+    
+    # Save all changes
+    save_rides_db(sample_rides)
+    save_bookings_db(bookings_db)
+    
+    # Generate communication URLs
+    whatsapp_message = f"Hi {ride['driver_name']}, I've booked your ride from {ride['from_location']} to {ride['to_location']} on {ride['date']} at {ride['departure_time']}. My name is {user.name} and my phone is {user.phone}. Looking forward to the ride!"
+    whatsapp_url = generate_whatsapp_url(ride['phone'], whatsapp_message)
+    call_url = f"tel:{ride['phone']}"
+    maps_url = generate_maps_url(ride['from_location'], ride['to_location'])
     
     print(f"🎫 Ride booked by {user.name} for ride {ride_id} ({ride['from_location']} -> {ride['to_location']})")
-    flash(f'Successfully booked ride from {ride["from_location"]} to {ride["to_location"]}! Contact {ride["driver_name"]} at {ride["phone"]}.', 'success')
+    
+    # Success message with communication options
+    success_message = f"""
+    <div style="text-align: center; padding: 2rem;">
+        <h3 style="color: #10B981; margin-bottom: 1rem;">🎉 Ride Booked Successfully!</h3>
+        <p><strong>Route:</strong> {ride['from_location']} → {ride['to_location']}</p>
+        <p><strong>Date & Time:</strong> {ride['date']} at {ride['departure_time']}</p>
+        <p><strong>Driver:</strong> {ride['driver_name']}</p>
+        <p><strong>Price:</strong> ₹{ride['price_per_seat']}</p>
+        <hr style="margin: 2rem 0;">
+        <h4 style="color: #667eea;">📞 Contact Driver:</h4>
+        <div style="margin: 1rem 0;">
+            <a href="{whatsapp_url}" target="_blank" style="display: inline-block; background: #25D366; color: white; padding: 12px 20px; text-decoration: none; border-radius: 8px; margin: 5px;">
+                📱 WhatsApp Driver
+            </a>
+            <a href="{call_url}" style="display: inline-block; background: #007bff; color: white; padding: 12px 20px; text-decoration: none; border-radius: 8px; margin: 5px;">
+                📞 Call Driver
+            </a>
+        </div>
+        <h4 style="color: #667eea; margin-top: 2rem;">🗺️ View Route:</h4>
+        <div style="margin: 1rem 0;">
+            <a href="{maps_url}" target="_blank" style="display: inline-block; background: #4285F4; color: white; padding: 12px 20px; text-decoration: none; border-radius: 8px; margin: 5px;">
+                🗺️ View on Google Maps
+            </a>
+        </div>
+        <p style="margin-top: 2rem; color: #666;">
+            <strong>Phone:</strong> {ride['phone']}<br>
+            Have a safe journey! 🚗
+        </p>
+    </div>
+    """
+    
+    flash(success_message, 'success')
     return redirect(url_for('find_ride'))
 
 @app.route('/cancel_ride/<int:ride_id>')
@@ -836,6 +974,26 @@ def cancel_ride(ride_id):
         flash('Ride not found or you do not have permission to cancel it.', 'error')
     
     return redirect(url_for('my_rides'))
+
+@app.route('/earnings_history')
+@login_required
+def earnings_history():
+    """View detailed earnings history"""
+    user = User(session['user_email'])
+    
+    # Get earnings history for current user
+    user_earnings = earnings_db.get(user.email, [])
+    user_earnings.sort(key=lambda x: (x['date'], x['time']), reverse=True)
+    
+    # Calculate statistics
+    total_earnings = sum(earning['amount'] for earning in user_earnings)
+    total_passengers = len(user_earnings)
+    
+    return render_template('earnings_history.html', 
+                         user=user, 
+                         earnings=user_earnings,
+                         total_earnings=total_earnings,
+                         total_passengers=total_passengers)
 
 # Debug route to check all rides (for troubleshooting)
 @app.route('/debug/rides')
@@ -859,6 +1017,8 @@ def debug_rides():
     <h1>🔍 DEBUG: All Rides in Database</h1>
     <p><strong>Current User:</strong> {user.name} ({user.email})</p>
     <p><strong>Total Rides:</strong> {len(sample_rides)}</p>
+    <p><strong>Total Bookings:</strong> {len(bookings_db)}</p>
+    <p><strong>Total Earnings Records:</strong> {len(earnings_db)}</p>
     <hr>
     {''.join([f"<p><strong>ID {r['id']}:</strong> {r['driver']} ({r['email']}) - {r['route']} on {r['date']} - Seats: {r['seats']}</p>" for r in rides_info])}
     <hr>
@@ -884,46 +1044,47 @@ def internal_error(error):
 
 if __name__ == '__main__':
     print("=" * 60)
-    print(" LIFTLINK CARPOOL - ENHANCED VERSION 8.2")
+    print(" LIFTLINK CARPOOL - ENHANCED VERSION 9.0")
     print("=" * 60)
     print("Local URL: http://127.0.0.1:5000")
     print("Network URL: http://localhost:5000")
     print("Xavier's Institute of Engineering")
-    print("Sustainable Commute Hub - FIXED RIDE SHARING!")
+    print("Sustainable Commute Hub - ADVANCED COMMUNICATION FEATURES!")
     print("=" * 60)
     print("✅ ENHANCED FEATURES:")
-    print("- 🔒 PERSISTENT USER REGISTRATION (No more re-registering!)")
-    print("- 💾 FILE-BASED USER & RIDES STORAGE")
-    print("- 🔄 AUTO-SAVE ON ALL CHANGES")
-    print("- 🚀 SURVIVES SERVER RESTARTS")
-    print("- 🎯 FIXED: Users can now see rides from OTHER users!")
-    print("- 🔍 ENHANCED SEARCH: Smart filtering and debugging")
-    print("- 👥 PROPER RIDE SHARING: Shubham can see Durvesh's rides!")
-    print("- 🎫 WORKING BOOKING SYSTEM: Book rides from other users")
-    print("- Clean Navigation (Dashboard/Profile/Logout boxes)")
-    print("- XIE Logo in Header")
-    print("- Fixed Find Ride Search (Method Not Allowed resolved)")
-    print("- My Rides Edit/Delete Functionality")
-    print("- Earnings Section in Profile")
-    print("- Animated Background Bubbles")
-    print("- Enhanced Typography (Playfair Display)")
+    print("- 🔒 PERSISTENT USER REGISTRATION")
+    print("- 💾 FILE-BASED STORAGE (Users, Rides, Bookings, Earnings)")
+    print("- 📱 WHATSAPP INTEGRATION - Send messages to drivers")
+    print("- 📞 DIRECT CALL FUNCTIONALITY")
+    print("- 🗺️ GOOGLE MAPS ROUTE INTEGRATION")
+    print("- 💰 DETAILED EARNINGS HISTORY")
+    print("- 🎫 ENHANCED BOOKING SYSTEM")
+    print("- 👥 PROPER RIDE SHARING")
+    print("- 🔍 SMART SEARCH & FILTERING")
+    print("- 📊 COMPREHENSIVE ANALYTICS")
     
     print(f"- Sample Routes: {len(sample_rides)} rides loaded")
     print(f"- Registered Users: {len(users_db)} users available")
+    print(f"- Total Bookings: {len(bookings_db)} bookings recorded")
+    print(f"- Earnings Records: {len(earnings_db)} drivers have earnings")
     print("=" * 60)
     print("🔐 TEST LOGIN CREDENTIALS:")
     print("Student - Email: test@student.xavier.ac.in")
     print("Staff - Email: john.doe@xavier.ac.in")
-    print("Additional Staff - Email: priya.patil@xavier.ac.in")
     print("Password: password123 / staff123")
     print("=" * 60)
     print("💾 DATABASE FILES:")
     print(f"- Users: {USERS_DB_FILE}")
     print(f"- Rides: {RIDES_DB_FILE}")
+    print(f"- Bookings: {BOOKINGS_DB_FILE}")
+    print(f"- Earnings: {EARNINGS_DB_FILE}")
     print("=" * 60)
-    print("🎉 FIXED ISSUE: Ride sharing now works perfectly!")
-    print("✅ Durvesh creates ride → Shubham can find & book it!")
-    print("🔍 Debug URL: http://localhost:5000/debug/rides")
+    print("🎉 NEW FEATURES ADDED:")
+    print("✅ WhatsApp integration with pre-filled messages")
+    print("✅ Direct call functionality")
+    print("✅ Google Maps route viewing")
+    print("✅ Detailed earnings history per passenger")
+    print("✅ Enhanced booking confirmation with all contact options")
     print("=" * 60)
     
     app.run(host='0.0.0.0', port=5000, debug=True, use_reloader=True, threaded=True)
