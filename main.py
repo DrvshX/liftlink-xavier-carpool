@@ -1,615 +1,872 @@
-from flask import Flask, render_template, request, redirect, url_for, session, flash, jsonify
-import json
-import hashlib
+"""
+LiftLink Carpool - Enhanced Flask Web Application
+Spyder Compatible
+Xavier's Institute of Engineering - Sustainable Commute Hub
+Version 6.1 - Complete with FIXED Profile Picture Support
+"""
+
 import os
-from datetime import datetime, timedelta
+import sys
+from flask import Flask, render_template, request, redirect, url_for, flash, session, send_from_directory
+from werkzeug.utils import secure_filename
+from functools import wraps
+import hashlib
 import secrets
-import string
-from flask_mail import Mail, Message
-# from captcha.image import ImageCaptcha  # COMMENTED OUT FOR DEPLOYMENT
-# import io  # COMMENTED OUT FOR DEPLOYMENT
-# import base64  # COMMENTED OUT FOR DEPLOYMENT
+from datetime import datetime
 
+# Try to import PIL for image processing, fallback if not available
+try:
+    from PIL import Image
+    PIL_AVAILABLE = True
+except ImportError:
+    PIL_AVAILABLE = False
+    print("📸 PIL not available - images will be saved without resizing")
+
+# Ensure we're in the right directory
+script_dir = os.path.dirname(os.path.abspath(__file__))
+os.chdir(script_dir)
+
+# Debug info
+print("="*60)
+print("🚗 LIFTLINK CARPOOL - PROFILE PICTURE FIX VERSION")
+print("="*60)
+print(f"📍 Current directory: {os.getcwd()}")
+print(f"📍 Templates exist: {os.path.exists('templates')}")
+print(f"📍 Static folder exists: {os.path.exists('static')}")
+if os.path.exists('templates'):
+    try:
+        print(f"📍 Template files: {os.listdir('templates')}")
+    except PermissionError:
+        print("❌ Permission denied accessing templates folder")
+print("="*60)
+
+# Initialize Flask app
 app = Flask(__name__)
-app.secret_key = os.environ.get('SECRET_KEY', 'your_secret_key_here_change_this')
+app.secret_key = 'xie_liftlink_secret_key_2025_profile_pic_fix'
 
-# Email Configuration
-app.config['MAIL_SERVER'] = 'smtp.gmail.com'
-app.config['MAIL_PORT'] = 587
-app.config['MAIL_USE_TLS'] = True
-app.config['MAIL_USERNAME'] = os.environ.get('MAIL_USERNAME', 'your_email@gmail.com')
-app.config['MAIL_PASSWORD'] = os.environ.get('MAIL_PASSWORD', 'your_app_password')
-app.config['MAIL_DEFAULT_SENDER'] = os.environ.get('MAIL_USERNAME', 'your_email@gmail.com')
+# Profile Picture Configuration
+UPLOAD_FOLDER = 'static/uploads/profile_pics'
+ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif'}
 
-mail = Mail(app)
+# Create upload directory if it doesn't exist
+os.makedirs(UPLOAD_FOLDER, exist_ok=True)
+os.makedirs('static/uploads', exist_ok=True)
+os.makedirs('static/images', exist_ok=True)
 
-# File paths
-USERS_FILE = 'users_db.json'
-RIDES_FILE = 'rides_db.json'
-BOOKINGS_FILE = 'bookings_db.json'
-EARNINGS_FILE = 'earnings_db.json'
-VERIFICATION_FILE = 'verification_tokens.json'
+app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
+app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024  # 16MB max file size
 
-# Initialize files if they don't exist
-def init_files():
-    for file_path in [USERS_FILE, RIDES_FILE, BOOKINGS_FILE, EARNINGS_FILE, VERIFICATION_FILE]:
-        if not os.path.exists(file_path):
-            with open(file_path, 'w') as f:
-                json.dump({}, f)
+# Profile Picture Helper Functions
+def allowed_file(filename):
+    """Check if uploaded file has allowed extension"""
+    return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
-init_files()
-
-def load_data(file_path):
-    try:
-        with open(file_path, 'r') as f:
-            return json.load(f)
-    except:
-        return {}
-
-def save_data(file_path, data):
-    with open(file_path, 'w') as f:
-        json.dump(data, f, indent=2)
-
-def hash_password(password):
-    return hashlib.sha256(password.encode()).hexdigest()
-
-def generate_token():
-    return ''.join(secrets.choice(string.ascii_letters + string.digits) for _ in range(32))
-
-# CAPTCHA FUNCTION COMMENTED OUT FOR DEPLOYMENT
-# def generate_captcha():
-#     image = ImageCaptcha(width=200, height=80)
-#     captcha_text = ''.join(secrets.choice(string.ascii_uppercase + string.digits) for _ in range(5))
-#     captcha_image = image.generate(captcha_text)
-#     
-#     # Convert to base64
-#     img_buffer = io.BytesIO()
-#     captcha_image.save(img_buffer, format='PNG')
-#     img_data = base64.b64encode(img_buffer.getvalue()).decode()
-#     
-#     return captcha_text, f"data:image/png;base64,{img_data}"
-
-def send_verification_email(email, token, name):
-    verification_url = url_for('verify_email', token=token, _external=True)
+def save_picture(form_picture, current_user_email):
+    """Save and optionally resize profile picture"""
+    random_hex = secrets.token_hex(8)
+    _, f_ext = os.path.splitext(form_picture.filename)
+    picture_fn = f"{current_user_email.replace('@', '_').replace('.', '_')}_{random_hex}{f_ext}"
+    picture_path = os.path.join(app.root_path, 'static', 'uploads', 'profile_pics', picture_fn)
     
-    msg = Message(
-        subject='🔒 LiftLink Email Verification - Xavier Institute',
-        recipients=[email]
-    )
+    # Create directory if it doesn't exist
+    os.makedirs(os.path.dirname(picture_path), exist_ok=True)
     
-    msg.html = f'''
-    <!DOCTYPE html>
-    <html>
-    <head>
-        <style>
-            body {{ font-family: Arial, sans-serif; background-color: #f5f5f5; margin: 0; padding: 20px; }}
-            .container {{ max-width: 600px; margin: 0 auto; background: white; border-radius: 10px; padding: 30px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }}
-            .header {{ text-align: center; margin-bottom: 30px; }}
-            .logo {{ font-size: 2rem; font-weight: bold; color: #667eea; margin-bottom: 10px; }}
-            .button {{ display: inline-block; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 15px 30px; text-decoration: none; border-radius: 8px; font-weight: bold; margin: 20px 0; }}
-            .footer {{ text-align: center; margin-top: 30px; color: #666; font-size: 0.9rem; }}
-        </style>
-    </head>
-    <body>
-        <div class="container">
-            <div class="header">
-                <div class="logo">🚗 LiftLink</div>
-                <h2>Xavier Institute of Engineering</h2>
-            </div>
+    if PIL_AVAILABLE:
+        output_size = (300, 300)
+        try:
+            img = Image.open(form_picture)
             
-            <h3>Hello {name}! 👋</h3>
+            # Convert to RGB if it's RGBA (for PNG with transparency)
+            if img.mode == 'RGBA':
+                img = img.convert('RGB')
             
-            <p>Welcome to <strong>LiftLink</strong> - Xavier Institute's exclusive carpooling platform!</p>
-            
-            <p>To complete your registration and access the platform, please verify your institutional email address by clicking the button below:</p>
-            
-            <div style="text-align: center;">
-                <a href="{verification_url}" class="button">
-                    ✅ Verify LiftLink, It's me...
-                </a>
-            </div>
-            
-            <p><strong>Important Security Notes:</strong></p>
-            <ul>
-                <li>🔒 This link is valid for 24 hours only</li>
-                <li>🏫 Only Xavier Institute email addresses are accepted</li>
-                <li>🚫 Do not share this link with anyone else</li>
-            </ul>
-            
-            <p>If you didn't request this verification, please ignore this email.</p>
-            
-            <div class="footer">
-                <p>This is an automated message from LiftLink Carpool System</p>
-                <p>Xavier Institute of Engineering - Smart Campus Initiative</p>
-            </div>
-        </div>
-    </body>
-    </html>
-    '''
+            # Resize image if PIL is available
+            img.thumbnail(output_size, Image.Resampling.LANCZOS)
+            img.save(picture_path, quality=90, optimize=True)
+            print(f"📸 Profile picture saved and resized: {picture_fn}")
+        except Exception as e:
+            print(f"❌ PIL resize failed, saving directly: {e}")
+            form_picture.save(picture_path)
+    else:
+        # If PIL is not available, just save the file directly
+        form_picture.save(picture_path)
+        print(f"📸 Profile picture saved: {picture_fn}")
     
-    try:
-        mail.send(msg)
-        return True
-    except Exception as e:
-        print(f"Email sending failed: {e}")
-        return False
+    # Verify file was saved
+    if os.path.exists(picture_path):
+        file_size = os.path.getsize(picture_path)
+        print(f"✅ File saved successfully: {picture_path} ({file_size} bytes)")
+    else:
+        print(f"❌ File NOT saved: {picture_path}")
+    
+    return picture_fn
 
-def validate_institutional_email(email):
-    """Validate Xavier Institute email domains"""
-    valid_domains = ['@student.xavier.ac.in', '@xavier.ac.in']
-    return any(email.endswith(domain) for domain in valid_domains)
+# Enhanced user database with more test users
+users_db = {
+    'test@student.xavier.ac.in': {
+        'name': 'Durvesh Bedre',
+        'email': 'test@student.xavier.ac.in',
+        'password': hashlib.sha256('password123'.encode()).hexdigest(),
+        'phone': '7700090035',
+        'student_id': '2023032002',
+        'department': 'Electronics & Telecommunication',
+        'year': 4,
+        'gender': 'Male',
+        'about': 'Final year ETC student interested in sustainable transportation.',
+        'profile_pic': None,
+        'verified': True
+    },
+    '2023032002.durvesh.vsb@student.xavier.ac.in': {
+        'name': 'Durvesh Bedre',
+        'email': '2023032002.durvesh.vsb@student.xavier.ac.in',
+        'password': hashlib.sha256('password123'.encode()).hexdigest(),
+        'phone': '7700090035',
+        'student_id': '2023032002',
+        'department': 'Electronics & Telecommunication',
+        'year': 4,
+        'gender': 'Male',
+        'about': 'Final year ETC student interested in sustainable transportation and carpooling.',
+        'profile_pic': None,
+        'verified': True
+    },
+    'admin@student.xavier.ac.in': {
+        'name': 'Admin User',
+        'email': 'admin@student.xavier.ac.in',
+        'password': hashlib.sha256('admin123'.encode()).hexdigest(),
+        'phone': '9876543210',
+        'student_id': '2023000001',
+        'department': 'Computer Engineering',
+        'year': 4,
+        'gender': 'Male',
+        'about': 'System Administrator',
+        'profile_pic': None,
+        'verified': True
+    }
+}
 
+# Enhanced sample rides data
+sample_rides = [
+    {
+        'id': 1,
+        'driver_name': 'Rohit Sharma',
+        'driver_email': '2023032001.rohit@student.xavier.ac.in',
+        'from_location': 'Vashi Station',
+        'to_location': 'Xavier Institute of Engineering',
+        'departure_time': '08:00 AM',
+        'date': '2025-09-19',
+        'available_seats': 3,
+        'total_seats': 4,
+        'car_model': 'Honda City',
+        'price_per_seat': 25,
+        'department': 'Computer Engineering',
+        'year': '3rd Year',
+        'rating': 4.5,
+        'phone': '9876543210',
+        'additional_info': 'Pickup near main gate, AC available'
+    },
+    {
+        'id': 2,
+        'driver_name': 'Priya Patil',
+        'driver_email': '2023032034.priya@student.xavier.ac.in',
+        'from_location': 'Nerul Station',
+        'to_location': 'Xavier Institute of Engineering',
+        'departure_time': '08:15 AM',
+        'date': '2025-09-19',
+        'available_seats': 2,
+        'total_seats': 4,
+        'car_model': 'Maruti Swift',
+        'price_per_seat': 20,
+        'department': 'Electronics & Telecom',
+        'year': '4th Year',
+        'rating': 4.8,
+        'phone': '9876543211',
+        'additional_info': 'Regular route, music system available'
+    },
+    {
+        'id': 3,
+        'driver_name': 'Kiran Desai',
+        'driver_email': '2023032080.kiran@student.xavier.ac.in',
+        'from_location': 'Dadar Station',
+        'to_location': 'Xavier Institute of Engineering',
+        'departure_time': '08:30 AM',
+        'date': '2025-09-19',
+        'available_seats': 2,
+        'total_seats': 4,
+        'car_model': 'Hyundai Creta',
+        'price_per_seat': 35,
+        'department': 'Mechanical Engineering',
+        'year': '3rd Year',
+        'rating': 4.4,
+        'phone': '9876543280',
+        'additional_info': 'Express route via Eastern Express Highway'
+    }
+]
+
+# Enhanced User class with better property handling
+class User:
+    def __init__(self, email):
+        self.email = email
+        self.data = users_db.get(email, {})
+        if not self.data:
+            print(f"❌ User not found in database: {email}")
+    
+    @property
+    def name(self):
+        return self.data.get('name', 'User')
+    
+    @property
+    def phone(self):
+        return self.data.get('phone', '')
+    
+    @property
+    def student_id(self):
+        return self.data.get('student_id', '')
+    
+    @property
+    def department(self):
+        return self.data.get('department', '')
+    
+    @property
+    def year(self):
+        return self.data.get('year', 1)
+    
+    @property
+    def gender(self):
+        return self.data.get('gender', '')
+    
+    @property
+    def about(self):
+        return self.data.get('about', '')
+    
+    @property
+    def profile_pic(self):
+        pic = self.data.get('profile_pic', None)
+        if pic:
+            # Verify file exists
+            pic_path = os.path.join(app.root_path, 'static', 'uploads', 'profile_pics', pic)
+            if os.path.exists(pic_path):
+                return pic
+            else:
+                print(f"⚠️ Profile picture file not found: {pic_path}")
+                return None
+        return None
+    
+    @property
+    def verified(self):
+        return self.data.get('verified', False)
+
+# Enhanced login decorator
+def login_required(f):
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        if 'user_email' not in session:
+            flash('Please log in to access this page.', 'error')
+            return redirect(url_for('login'))
+        
+        # Verify user still exists in database
+        if session['user_email'] not in users_db:
+            session.clear()
+            flash('Your session has expired. Please log in again.', 'error')
+            return redirect(url_for('login'))
+        
+        return f(*args, **kwargs)
+    return decorated_function
+
+# Static file serving for uploaded images
+@app.route('/static/uploads/profile_pics/<filename>')
+def uploaded_file(filename):
+    return send_from_directory(app.config['UPLOAD_FOLDER'], filename)
+
+# Main Routes
 @app.route('/')
 def index():
-    if 'user_id' in session:
+    """Home page - redirect to dashboard if logged in, otherwise show login"""
+    if 'user_email' in session:
         return redirect(url_for('dashboard'))
-    return redirect(url_for('login'))
-
-@app.route('/login', methods=['GET', 'POST'])
-def login():
-    if request.method == 'POST':
-        email = request.form.get('email', '').lower().strip()
-        password = request.form.get('password', '')
-        # captcha_input = request.form.get('captcha', '').upper()  # COMMENTED OUT FOR DEPLOYMENT
-        
-        # CAPTCHA VERIFICATION COMMENTED OUT FOR DEPLOYMENT
-        # if 'captcha_text' not in session or captcha_input != session['captcha_text']:
-        #     flash('❌ Invalid CAPTCHA! Please try again.', 'error')
-        #     return render_template('login.html')
-        # 
-        # # Remove used CAPTCHA
-        # session.pop('captcha_text', None)
-        
-        if not email or not password:
-            flash('❌ Please fill in all fields!', 'error')
-            return render_template('login.html')
-        
-        # Validate institutional email
-        if not validate_institutional_email(email):
-            flash('❌ Please use your Xavier Institute email address!', 'error')
-            return render_template('login.html')
-        
-        users = load_data(USERS_FILE)
-        user = users.get(email)
-        
-        if not user:
-            flash('❌ Account not found! Please register first.', 'error')
-            return render_template('login.html')
-        
-        if not user.get('verified', False):
-            flash('❌ Please verify your email first! Check your inbox.', 'error')
-            return render_template('login.html')
-        
-        if user['password'] == hash_password(password):
-            session['user_id'] = email
-            session['user_name'] = user['name']
-            flash(f'✅ Welcome back, {user["name"]}!', 'success')
-            return redirect(url_for('dashboard'))
-        else:
-            flash('❌ Invalid password!', 'error')
-    
     return render_template('login.html')
 
 @app.route('/register', methods=['GET', 'POST'])
 def register():
+    """User registration with enhanced validation"""
     if request.method == 'POST':
-        # Get form data
         name = request.form.get('name', '').strip()
-        email = request.form.get('email', '').lower().strip()
+        email = request.form.get('email', '').strip().lower()
+        phone = request.form.get('phone', '').strip()
+        student_id = request.form.get('student_id', '').strip()
         password = request.form.get('password', '')
         confirm_password = request.form.get('confirm_password', '')
-        phone = request.form.get('phone', '').strip()
-        user_type = request.form.get('user_type', '')
-        department = request.form.get('department', '').strip()
-        year = request.form.get('year', '').strip()
-        designation = request.form.get('designation', '').strip()
-        emergency_name = request.form.get('emergency_name', '').strip()
-        emergency_phone = request.form.get('emergency_phone', '').strip()
         
-        # Validation
-        if not all([name, email, password, confirm_password, phone, user_type, emergency_name, emergency_phone]):
-            flash('❌ Please fill in all required fields!', 'error')
+        # Enhanced validation
+        if not all([name, email, phone, student_id, password]):
+            flash('All fields are required.', 'error')
             return render_template('register.html')
         
-        if not validate_institutional_email(email):
-            flash('❌ Please use your Xavier Institute email address!', 'error')
+        if not email.endswith('@student.xavier.ac.in'):
+            flash('Please use your Xavier Institute email address (@student.xavier.ac.in).', 'error')
             return render_template('register.html')
         
         if password != confirm_password:
-            flash('❌ Passwords do not match!', 'error')
+            flash('Passwords do not match.', 'error')
             return render_template('register.html')
         
         if len(password) < 6:
-            flash('❌ Password must be at least 6 characters!', 'error')
+            flash('Password must be at least 6 characters long.', 'error')
             return render_template('register.html')
         
-        users = load_data(USERS_FILE)
-        
-        if email in users:
-            flash('❌ Email already registered!', 'error')
+        if email in users_db:
+            flash('Email already registered. Please use a different email.', 'error')
             return render_template('register.html')
         
-        # Generate verification token
-        token = generate_token()
-        verification_tokens = load_data(VERIFICATION_FILE)
+        if len(phone) != 10:
+            flash('Please enter a valid phone number.', 'error')
+            return render_template('register.html')
         
-        # Store verification token (expires in 24 hours)
-        verification_tokens[token] = {
+        # Create user account
+        users_db[email] = {
+            'name': name,
             'email': email,
-            'expires': (datetime.now() + timedelta(hours=24)).isoformat(),
-            'user_data': {
-                'name': name,
-                'email': email,
-                'password': hash_password(password),
-                'phone': phone,
-                'user_type': user_type,
-                'department': department if user_type == 'student' else '',
-                'year': year if user_type == 'student' else '',
-                'designation': designation if user_type == 'staff' else '',
-                'emergency_contact': {
-                    'name': emergency_name,
-                    'phone': emergency_phone
-                },
-                'verified': False,
-                'created_at': datetime.now().isoformat()
-            }
+            'password': hashlib.sha256(password.encode()).hexdigest(),
+            'phone': phone,
+            'student_id': student_id,
+            'department': '',
+            'year': 1,
+            'gender': '',
+            'about': '',
+            'profile_pic': None,
+            'verified': True
         }
         
-        save_data(VERIFICATION_FILE, verification_tokens)
-        
-        # Send verification email
-        if send_verification_email(email, token, name):
-            flash('✅ Registration initiated! Please check your email to verify your account.', 'success')
-            return render_template('verification_sent.html', email=email)
-        else:
-            flash('❌ Failed to send verification email. Please try again.', 'error')
+        print(f"✅ New user registered: {name} ({email})")
+        flash('Registration successful! Please log in with your credentials.', 'success')
+        return redirect(url_for('login'))
     
     return render_template('register.html')
 
-@app.route('/verify_email/<token>')
-def verify_email(token):
-    verification_tokens = load_data(VERIFICATION_FILE)
-    
-    if token not in verification_tokens:
-        flash('❌ Invalid verification link!', 'error')
-        return redirect(url_for('login'))
-    
-    token_data = verification_tokens[token]
-    
-    # Check if token expired
-    if datetime.now() > datetime.fromisoformat(token_data['expires']):
-        # Clean up expired token
-        del verification_tokens[token]
-        save_data(VERIFICATION_FILE, verification_tokens)
-        flash('❌ Verification link has expired! Please register again.', 'error')
-        return redirect(url_for('register'))
-    
-    # Verify user
-    users = load_data(USERS_FILE)
-    user_data = token_data['user_data']
-    user_data['verified'] = True
-    
-    users[user_data['email']] = user_data
-    save_data(USERS_FILE, users)
-    
-    # Clean up verification token
-    del verification_tokens[token]
-    save_data(VERIFICATION_FILE, verification_tokens)
-    
-    flash('✅ Email verified successfully! You can now login to LiftLink.', 'success')
-    return redirect(url_for('login'))
-
-# CAPTCHA ROUTE COMMENTED OUT FOR DEPLOYMENT
-# @app.route('/captcha')
-# def captcha():
-#     captcha_text, captcha_image = generate_captcha()
-#     session['captcha_text'] = captcha_text
-#     return jsonify({'image': captcha_image})
-
-@app.route('/dashboard')
-def dashboard():
-    if 'user_id' not in session:
-        flash('❌ Please login first!', 'error')
-        return redirect(url_for('login'))
-    
-    user_email = session['user_id']
-    users = load_data(USERS_FILE)
-    rides = load_data(RIDES_FILE)
-    bookings = load_data(BOOKINGS_FILE)
-    earnings = load_data(EARNINGS_FILE)
-    
-    user = users.get(user_email, {})
-    
-    # Get user's created rides
-    user_rides = [ride for ride in rides.values() if ride.get('driver') == user_email]
-    
-    # Get user's bookings
-    user_bookings = [booking for booking in bookings.values() if booking.get('passenger') == user_email]
-    
-    # Get earnings
-    user_earnings = earnings.get(user_email, [])
-    total_earnings = sum(float(earning.get('amount', 0)) for earning in user_earnings)
-    
-    return render_template('dashboard.html', 
-                         user=user,
-                         user_rides=user_rides,
-                         user_bookings=user_bookings,
-                         user_earnings=user_earnings,
-                         total_earnings=total_earnings)
-
-@app.route('/create_ride', methods=['GET', 'POST'])
-def create_ride():
-    if 'user_id' not in session:
-        flash('❌ Please login first!', 'error')
-        return redirect(url_for('login'))
-    
+@app.route('/login', methods=['GET', 'POST'])
+def login():
+    """Enhanced login with better security"""
     if request.method == 'POST':
-        # Get form data
-        from_location = request.form.get('from_location', '').strip()
-        to_location = request.form.get('to_location', '').strip()
-        date = request.form.get('date', '')
-        time = request.form.get('time', '')
-        seats = request.form.get('seats', '')
-        price = request.form.get('price', '')
-        car_model = request.form.get('car_model', '').strip()
-        car_number = request.form.get('car_number', '').strip().upper()
-        notes = request.form.get('notes', '').strip()
+        email = request.form.get('email', '').strip().lower()
+        password = request.form.get('password', '')
         
-        # Validation
-        if not all([from_location, to_location, date, time, seats, price]):
-            flash('❌ Please fill in all required fields!', 'error')
-            return render_template('create_ride.html')
+        if not email or not password:
+            flash('Please enter both email and password.', 'error')
+            return render_template('login.html')
         
-        try:
-            seats = int(seats)
-            price = float(price)
-            if seats <= 0 or price <= 0:
-                raise ValueError
-        except ValueError:
-            flash('❌ Please enter valid seats and price!', 'error')
-            return render_template('create_ride.html')
-        
-        # Create ride ID
-        ride_id = datetime.now().strftime('%Y%m%d%H%M%S') + '_' + session['user_id'].split('@')[0]
-        
-        rides = load_data(RIDES_FILE)
-        
-        rides[ride_id] = {
-            'id': ride_id,
-            'driver': session['user_id'],
-            'driver_name': session['user_name'],
-            'from_location': from_location,
-            'to_location': to_location,
-            'date': date,
-            'time': time,
-            'total_seats': seats,
-            'available_seats': seats,
-            'price': price,
-            'car_model': car_model,
-            'car_number': car_number,
-            'notes': notes,
-            'created_at': datetime.now().isoformat()
-        }
-        
-        save_data(RIDES_FILE, rides)
-        flash('✅ Ride created successfully!', 'success')
-        return redirect(url_for('dashboard'))
+        user_data = users_db.get(email)
+        if user_data and user_data['password'] == hashlib.sha256(password.encode()).hexdigest():
+            session['user_email'] = email
+            print(f"✅ User logged in: {user_data['name']} ({email})")
+            flash(f'Welcome back, {user_data["name"]}!', 'success')
+            return redirect(url_for('dashboard'))
+        else:
+            flash('Invalid email or password. Please try again.', 'error')
     
-    return render_template('create_ride.html')
-
-@app.route('/find_ride')
-def find_ride():
-    if 'user_id' not in session:
-        flash('❌ Please login first!', 'error')
-        return redirect(url_for('login'))
-    
-    # Get search parameters
-    search_from = request.args.get('from_location', '').strip()
-    search_to = request.args.get('to_location', '').strip()
-    search_date = request.args.get('date', '')
-    
-    rides = load_data(RIDES_FILE)
-    bookings = load_data(BOOKINGS_FILE)
-    users = load_data(USERS_FILE)
-    
-    current_user = session['user_id']
-    available_rides = []
-    
-    # Get user's bookings to check booking status
-    user_bookings = {booking['ride_id']: booking for booking in bookings.values() 
-                    if booking.get('passenger') == current_user}
-    
-    for ride_id, ride in rides.items():
-        # Don't show user's own rides
-        if ride.get('driver') == current_user:
-            continue
-        
-        # Only show rides with available seats
-        if ride.get('available_seats', 0) <= 0:
-            continue
-        
-        # Filter by search criteria if provided
-        match_from = not search_from or search_from.lower() in ride.get('from_location', '').lower()
-        match_to = not search_to or search_to.lower() in ride.get('to_location', '').lower()
-        match_date = not search_date or search_date == ride.get('date', '')
-        
-        if match_from and match_to and match_date:
-            # Get driver info
-            driver_info = users.get(ride.get('driver'), {})
-            ride['driver_phone'] = driver_info.get('phone', '')
-            
-            # Check if user has already booked this ride
-            ride['user_booked'] = ride_id in user_bookings
-            
-            available_rides.append(ride)
-    
-    return render_template('find_ride.html', 
-                         rides=available_rides,
-                         search_from=search_from,
-                         search_to=search_to,
-                         search_date=search_date)
-
-@app.route('/book_ride/<ride_id>')
-def book_ride(ride_id):
-    if 'user_id' not in session:
-        flash('❌ Please login first!', 'error')
-        return redirect(url_for('login'))
-    
-    user_email = session['user_id']
-    rides = load_data(RIDES_FILE)
-    bookings = load_data(BOOKINGS_FILE)
-    earnings = load_data(EARNINGS_FILE)
-    users = load_data(USERS_FILE)
-    
-    # Check if ride exists
-    if ride_id not in rides:
-        flash('❌ Ride not found!', 'error')
-        return redirect(url_for('find_ride'))
-    
-    ride = rides[ride_id]
-    
-    # Check if user is trying to book their own ride
-    if ride.get('driver') == user_email:
-        flash('❌ You cannot book your own ride!', 'error')
-        return redirect(url_for('find_ride'))
-    
-    # Check if user has already booked this ride
-    user_bookings = [booking for booking in bookings.values() 
-                    if booking.get('passenger') == user_email and booking.get('ride_id') == ride_id]
-    if user_bookings:
-        flash('❌ You have already booked this ride! Only one seat per ride allowed.', 'error')
-        return redirect(url_for('find_ride'))
-    
-    # Check seat availability
-    if ride.get('available_seats', 0) <= 0:
-        flash('❌ No seats available for this ride!', 'error')
-        return redirect(url_for('find_ride'))
-    
-    # Create booking
-    booking_id = datetime.now().strftime('%Y%m%d%H%M%S') + '_' + user_email.split('@')[0]
-    
-    bookings[booking_id] = {
-        'id': booking_id,
-        'ride_id': ride_id,
-        'passenger': user_email,
-        'passenger_name': session['user_name'],
-        'driver': ride.get('driver'),
-        'driver_name': ride.get('driver_name'),
-        'from_location': ride.get('from_location'),
-        'to_location': ride.get('to_location'),
-        'date': ride.get('date'),
-        'time': ride.get('time'),
-        'price': ride.get('price'),
-        'status': 'confirmed',
-        'booked_at': datetime.now().isoformat()
-    }
-    
-    # Update ride available seats
-    rides[ride_id]['available_seats'] -= 1
-    
-    # Add to driver's earnings
-    driver_email = ride.get('driver')
-    if driver_email not in earnings:
-        earnings[driver_email] = []
-    
-    earnings[driver_email].append({
-        'passenger_name': session['user_name'],
-        'amount': ride.get('price'),
-        'route': f"{ride.get('from_location')} → {ride.get('to_location')}",
-        'date': ride.get('date'),
-        'time': ride.get('time'),
-        'booking_date': datetime.now().isoformat()
-    })
-    
-    # Save all data
-    save_data(BOOKINGS_FILE, bookings)
-    save_data(RIDES_FILE, rides)
-    save_data(EARNINGS_FILE, earnings)
-    
-    flash('✅ Ride booked successfully!', 'success')
-    return redirect(url_for('find_ride'))
-
-@app.route('/my_rides')
-def my_rides():
-    if 'user_id' not in session:
-        flash('❌ Please login first!', 'error')
-        return redirect(url_for('login'))
-    
-    user_email = session['user_id']
-    rides = load_data(RIDES_FILE)
-    bookings = load_data(BOOKINGS_FILE)
-    
-    # Get user's created rides
-    user_rides = [ride for ride in rides.values() if ride.get('driver') == user_email]
-    
-    # Get user's bookings
-    user_bookings = [booking for booking in bookings.values() if booking.get('passenger') == user_email]
-    
-    return render_template('my_rides.html', 
-                         user_rides=user_rides,
-                         user_bookings=user_bookings)
-
-@app.route('/profile')
-def profile():
-    if 'user_id' not in session:
-        flash('❌ Please login first!', 'error')
-        return redirect(url_for('login'))
-    
-    users = load_data(USERS_FILE)
-    user = users.get(session['user_id'], {})
-    
-    return render_template('profile.html', user=user)
-
-@app.route('/edit_profile', methods=['GET', 'POST'])
-def edit_profile():
-    if 'user_id' not in session:
-        flash('❌ Please login first!', 'error')
-        return redirect(url_for('login'))
-    
-    users = load_data(USERS_FILE)
-    user_email = session['user_id']
-    
-    if request.method == 'POST':
-        # Update user data
-        users[user_email]['name'] = request.form.get('name', '').strip()
-        users[user_email]['phone'] = request.form.get('phone', '').strip()
-        users[user_email]['department'] = request.form.get('department', '').strip()
-        users[user_email]['year'] = request.form.get('year', '').strip()
-        users[user_email]['designation'] = request.form.get('designation', '').strip()
-        users[user_email]['emergency_contact']['name'] = request.form.get('emergency_name', '').strip()
-        users[user_email]['emergency_contact']['phone'] = request.form.get('emergency_phone', '').strip()
-        
-        # Update session name if changed
-        session['user_name'] = users[user_email]['name']
-        
-        save_data(USERS_FILE, users)
-        flash('✅ Profile updated successfully!', 'success')
-        return redirect(url_for('profile'))
-    
-    user = users.get(user_email, {})
-    return render_template('edit_profile.html', user=user)
-
-@app.route('/earnings')
-def earnings():
-    if 'user_id' not in session:
-        flash('❌ Please login first!', 'error')
-        return redirect(url_for('login'))
-    
-    user_email = session['user_id']
-    earnings_data = load_data(EARNINGS_FILE)
-    
-    user_earnings = earnings_data.get(user_email, [])
-    total_earnings = sum(float(earning.get('amount', 0)) for earning in user_earnings)
-    
-    return render_template('earnings.html', 
-                         earnings=user_earnings,
-                         total_earnings=total_earnings)
+    return render_template('login.html')
 
 @app.route('/logout')
 def logout():
+    """Enhanced logout with session cleanup"""
+    user_email = session.get('user_email', 'Unknown')
     session.clear()
-    flash('✅ Logged out successfully!', 'success')
-    return redirect(url_for('login'))
+    print(f"👋 User logged out: {user_email}")
+    flash('You have been logged out successfully.', 'success')
+    return redirect(url_for('index'))
 
+@app.route('/dashboard')
+@login_required
+def dashboard():
+    """Enhanced dashboard with user statistics"""
+    user = User(session['user_email'])
+    
+    # Calculate user statistics
+    user_rides = [ride for ride in sample_rides if ride['driver_email'] == user.email]
+    
+    stats = {
+        'rides_offered': len(user_rides),
+        'active_rides': len([r for r in user_rides if r['available_seats'] > 0]),
+        'total_earnings': sum(ride['price_per_seat'] * (ride['total_seats'] - ride['available_seats']) for ride in user_rides)
+    }
+    
+    return render_template('dashboard.html', user=user, stats=stats, user_rides=user_rides)
+
+@app.route('/profile')
+@login_required
+def profile():
+    """Enhanced profile page with detailed information"""
+    user = User(session['user_email'])
+    
+    # Calculate profile statistics
+    user_rides = [ride for ride in sample_rides if ride['driver_email'] == user.email]
+    total_rides = len(user_rides)
+    total_seats_shared = sum(ride['total_seats'] - ride['available_seats'] for ride in user_rides)
+    total_earnings = sum(ride['price_per_seat'] * (ride['total_seats'] - ride['available_seats']) for ride in user_rides)
+    
+    stats = {
+        'total_rides': total_rides,
+        'total_seats_shared': total_seats_shared,
+        'total_earnings': total_earnings,
+        'avg_rating': 4.5,
+    }
+    
+    # Debug Print user data
+    print(f"🔧 Profile Debug - User: {user.email}, Profile Pic: {user.profile_pic}")
+    if user.profile_pic:
+        pic_path = os.path.join(app.root_path, 'static', 'uploads', 'profile_pics', user.profile_pic)
+        print(f"🔧 Profile Pic Path: {pic_path}, Exists: {os.path.exists(pic_path)}")
+    
+    return render_template('profile.html', user=user, user_rides=user_rides, stats=stats)
+
+@app.route('/edit_profile', methods=['GET', 'POST'])
+@login_required
+def edit_profile():
+    """ENHANCED profile editing with FIXED profile picture support"""
+    user = User(session['user_email'])
+    
+    if request.method == 'POST':
+        name = request.form.get('name', '').strip()
+        phone = request.form.get('phone', '').strip()
+        department = request.form.get('department', '').strip()
+        year = request.form.get('year', 1)
+        about = request.form.get('about', '').strip()
+        
+        # Validate required fields
+        if not name:
+            flash('Name is required.', 'error')
+            return render_template('edit_profile.html', user=user)
+        
+        if not phone:
+            flash('Phone number is required.', 'error')
+            return render_template('edit_profile.html', user=user)
+        
+        # ENHANCED Profile Picture Handling with DEBUGGING
+        profile_pic_filename = None
+        if 'profile_pic' in request.files:
+            file = request.files['profile_pic']
+            print(f"📸 File received: {file.filename}, Size: {len(file.read()) if file else 0}")
+            file.seek(0)  # Reset file pointer after reading
+            
+            if file and file.filename != '' and allowed_file(file.filename):
+                try:
+                    print("📸 Processing profile picture upload...")
+                    
+                    # Delete old profile picture if exists
+                    old_pic = users_db[session['user_email']].get('profile_pic')
+                    if old_pic:
+                        old_path = os.path.join(app.root_path, 'static', 'uploads', 'profile_pics', old_pic)
+                        if os.path.exists(old_path):
+                            os.remove(old_path)
+                            print(f"🗑️ Deleted old profile picture: {old_pic}")
+                    
+                    # Save new picture with enhanced error handling
+                    profile_pic_filename = save_picture(file, session['user_email'])
+                    
+                    # VERIFY file was saved properly
+                    saved_path = os.path.join(app.root_path, 'static', 'uploads', 'profile_pics', profile_pic_filename)
+                    if os.path.exists(saved_path):
+                        file_size = os.path.getsize(saved_path)
+                        print(f"✅ Profile picture VERIFIED: {profile_pic_filename} ({file_size} bytes)")
+                        
+                        # Test URL generation
+                        pic_url = url_for('static', filename=f'uploads/profile_pics/{profile_pic_filename}')
+                        print(f"🔗 Profile picture URL: {pic_url}")
+                    else:
+                        print(f"❌ Profile picture file NOT FOUND after save: {saved_path}")
+                        flash('Error: Profile picture was not saved properly. Please try again.', 'error')
+                        return render_template('edit_profile.html', user=user)
+                        
+                except Exception as e:
+                    flash(f'Error uploading profile picture: {str(e)}', 'error')
+                    print(f"❌ Profile picture upload error: {e}")
+                    import traceback
+                    traceback.print_exc()
+                    return render_template('edit_profile.html', user=user)
+                    
+            elif file and file.filename != '':
+                flash('Please upload a valid image file (PNG, JPG, JPEG, or GIF).', 'error')
+                return render_template('edit_profile.html', user=user)
+        
+        # Update user data in database
+        email = session['user_email']
+        users_db[email]['name'] = name
+        users_db[email]['phone'] = phone
+        users_db[email]['department'] = department
+        users_db[email]['year'] = year
+        users_db[email]['about'] = about
+        
+        if profile_pic_filename:
+            users_db[email]['profile_pic'] = profile_pic_filename
+            print(f"💾 Database updated with profile picture: {profile_pic_filename}")
+        
+        print(f"💾 Updated user data for {email}:")
+        print(f"   - Name: {users_db[email]['name']}")
+        print(f"   - Phone: {users_db[email]['phone']}")
+        print(f"   - Department: {users_db[email]['department']}")
+        print(f"   - Profile Pic: {users_db[email]['profile_pic']}")
+        
+        flash('Profile updated successfully!', 'success')
+        return redirect(url_for('profile'))
+    
+    return render_template('edit_profile.html', user=user)
+
+@app.route('/find_ride')
+@login_required
+def find_ride():
+    """Find available rides"""
+    user = User(session['user_email'])
+    return render_template('find_ride.html', user=user, rides=sample_rides)
+
+@app.route('/search_rides', methods=['POST'])
+@login_required
+def search_rides():
+    """Enhanced ride search with intelligent matching"""
+    user = User(session['user_email'])
+    from_location = request.form.get('from_location', '').strip()
+    to_location = request.form.get('to_location', '').strip()
+    ride_date = request.form.get('ride_date', '')
+    ride_time = request.form.get('ride_time', '')
+    
+    print(f"🔍 Search Query - From: {from_location}, To: {to_location}, Date: {ride_date}, Time: {ride_time}")
+    
+    filtered_rides = []
+    
+    for ride in sample_rides:
+        # Enhanced search with fuzzy matching
+        from_match = any([
+            not from_location,
+            from_location.lower() in ride['from_location'].lower(),
+            ride['from_location'].lower() in from_location.lower(),
+            any(word in ride['from_location'].lower() for word in from_location.lower().split())
+        ])
+        
+        # Location matching
+        to_match = any([
+            not to_location,
+            to_location.lower() in ride['to_location'].lower(),
+            ride['to_location'].lower() in to_location.lower(),
+            'xavier' in to_location.lower() and 'xavier' in ride['to_location'].lower(),
+            'institute' in to_location.lower() and 'institute' in ride['to_location'].lower(),
+        ])
+        
+        # Date matching
+        date_match = True
+        if ride_date:
+            date_match = (ride_date == ride['date'])
+        
+        # Time matching
+        time_match = True
+        if ride_time and ride_time != '':
+            ride_hour = int(ride['departure_time'].split(':')[0])
+            if ride_time == 'morning' and ride_hour >= 6 and ride_hour < 12:
+                time_match = True
+            elif ride_time == 'afternoon' and ride_hour >= 12 and ride_hour < 17:
+                time_match = True
+            elif ride_time == 'evening' and ride_hour >= 17:
+                time_match = True
+            else:
+                time_match = (ride_time == ride_time)
+        
+        # Only show rides with available seats
+        seats_available = ride['available_seats'] > 0
+        
+        if from_match and to_match and date_match and time_match and seats_available:
+            filtered_rides.append(ride)
+    
+    # Sort by rating and availability
+    filtered_rides.sort(key=lambda x: (x['rating'], x['available_seats']), reverse=True)
+    
+    print(f"✅ Found {len(filtered_rides)} matching rides")
+    return render_template('find_ride.html', user=user, rides=filtered_rides, 
+                         search_performed=True, from_location=from_location, 
+                         to_location=to_location, ride_date=ride_date, ride_time=ride_time)
+
+@app.route('/book_ride/<int:ride_id>')
+@login_required
+def book_ride(ride_id):
+    """Book a ride"""
+    user = User(session['user_email'])
+    
+    # Find and verify ownership
+    ride = None
+    for r in sample_rides:
+        if r['id'] == ride_id:
+            ride = r
+            break
+    
+    if ride and ride['available_seats'] > 0:
+        print(f"📋 Booking attempt - User: {user.name}, Ride: {ride_id}")
+        flash(f'Ride booking request sent to {ride["driver_name"]}! Contact them at {ride["phone"]}', 'success')
+        ride['available_seats'] -= 1
+    else:
+        flash('Sorry, this ride is no longer available or fully booked.', 'error')
+    
+    return redirect(url_for('find_ride'))
+
+@app.route('/create_ride', methods=['GET', 'POST'])
+@login_required
+def create_ride():
+    """Enhanced ride creation with comprehensive validation"""
+    user = User(session['user_email'])
+    
+    if request.method == 'POST':
+        from_location = request.form.get('from_location', '').strip()
+        to_location = request.form.get('to_location', '').strip()
+        departure_date = request.form.get('departure_date', '')
+        departure_time = request.form.get('departure_time', '')
+        available_seats = request.form.get('available_seats', 1)
+        price_per_seat = request.form.get('price_per_seat', 0)
+        car_model = request.form.get('car_model', '').strip()
+        additional_info = request.form.get('additional_info', '').strip()
+        
+        # Comprehensive validation
+        if not all([from_location, to_location, departure_date, departure_time]):
+            flash('Please fill all required fields (From, To, Date, Time).', 'error')
+            return render_template('create_ride.html', user=user)
+        
+        try:
+            available_seats = int(available_seats)
+            price_per_seat = float(price_per_seat)
+        except (ValueError, TypeError):
+            flash('Please enter valid numbers for seats and price.', 'error')
+            return render_template('create_ride.html', user=user)
+        
+        if available_seats < 1 or available_seats > 7:
+            flash('Available seats must be between 1 and 7.', 'error')
+            return render_template('create_ride.html', user=user)
+        
+        if price_per_seat < 0:
+            flash('Price cannot be negative.', 'error')
+            return render_template('create_ride.html', user=user)
+        
+        # Time formatting
+        try:
+            time_obj = datetime.strptime(departure_time, '%H:%M')
+            formatted_time = time_obj.strftime('%I:%M %p')
+        except ValueError:
+            flash('Please enter a valid time in HH:MM format.', 'error')
+            return render_template('create_ride.html', user=user)
+        
+        # Date validation
+        try:
+            ride_date = datetime.strptime(departure_date, '%Y-%m-%d').date()
+            today = datetime.now().date()
+            if ride_date < today:
+                flash('Departure date cannot be in the past.', 'error')
+                return render_template('create_ride.html', user=user)
+        except ValueError:
+            flash('Please enter a valid date.', 'error')
+            return render_template('create_ride.html', user=user)
+        
+        # Create new ride
+        new_ride = {
+            'id': max([ride['id'] for ride in sample_rides], default=0) + 1,
+            'driver_name': user.name,
+            'driver_email': user.email,
+            'from_location': from_location,
+            'to_location': to_location,
+            'departure_time': formatted_time,
+            'date': departure_date,
+            'available_seats': available_seats,
+            'total_seats': available_seats,
+            'car_model': car_model if car_model else 'Not specified',
+            'price_per_seat': price_per_seat,
+            'department': user.department if user.department else 'Not specified',
+            'year': f"{user.year}{'st' if user.year == 1 else 'nd' if user.year == 2 else 'rd' if user.year == 3 else 'th'} Year",
+            'rating': 4.0,
+            'phone': user.phone,
+            'additional_info': additional_info
+        }
+        
+        sample_rides.append(new_ride)
+        print(f"🚗 New ride created - ID: {new_ride['id']}, Driver: {user.name}")
+        flash(f'Ride created successfully! From {from_location} to {to_location} on {departure_date}', 'success')
+        return redirect(url_for('my_rides'))
+    
+    return render_template('create_ride.html', user=user)
+
+@app.route('/my_rides')
+@login_required
+def my_rides():
+    """Display user's created rides"""
+    user = User(session['user_email'])
+    user_rides = [ride for ride in sample_rides if ride['driver_email'] == user.email]
+    
+    # Sort by date and departure time
+    user_rides.sort(key=lambda x: (x['date'], x['departure_time']))
+    
+    return render_template('my_rides.html', user=user, rides=user_rides)
+
+@app.route('/delete_ride/<int:ride_id>')
+@login_required
+def delete_ride(ride_id):
+    """Delete a user's ride with enhanced security"""
+    user = User(session['user_email'])
+    global sample_rides
+    
+    # Find and verify ownership
+    ride_to_delete = None
+    for ride in sample_rides:
+        if ride['id'] == ride_id and ride['driver_email'] == user.email:
+            ride_to_delete = ride
+            break
+    
+    if ride_to_delete:
+        original_count = len(sample_rides)
+        sample_rides = [ride for ride in sample_rides if ride['id'] != ride_id]
+        
+        if len(sample_rides) < original_count:
+            print(f"🗑️ Ride deleted - ID: {ride_id}, Driver: {user.name}")
+            flash('Ride deleted successfully!', 'success')
+        else:
+            flash('Error deleting ride. Please try again.', 'error')
+    else:
+        flash('Ride not found or you do not have permission to delete it.', 'error')
+    
+    return redirect(url_for('my_rides'))
+
+@app.route('/my_bookings')
+@login_required
+def my_bookings():
+    """Placeholder for user bookings"""
+    user = User(session['user_email'])
+    flash('My Bookings feature coming soon! You will be able to view and manage your ride bookings here.', 'info')
+    return redirect(url_for('dashboard'))
+
+# DEBUG Routes for Profile Picture Testing
+@app.route('/debug_profile')
+@login_required
+def debug_profile():
+    """Debug profile picture issues"""
+    user = User(session['user_email'])
+    upload_folder = os.path.join(app.root_path, 'static', 'uploads', 'profile_pics')
+    
+    debug_info = {
+        'user_email': user.email,
+        'profile_pic': user.profile_pic,
+        'upload_folder_exists': os.path.exists(upload_folder),
+        'upload_folder_path': upload_folder,
+        'app_root_path': app.root_path,
+    }
+    
+    if user.profile_pic:
+        pic_path = os.path.join(upload_folder, user.profile_pic)
+        debug_info['pic_file_exists'] = os.path.exists(pic_path)
+        debug_info['pic_full_path'] = pic_path
+        debug_info['pic_url'] = url_for('static', filename=f'uploads/profile_pics/{user.profile_pic}')
+        
+        if os.path.exists(pic_path):
+            debug_info['pic_file_size'] = os.path.getsize(pic_path)
+    
+    if os.path.exists(upload_folder):
+        debug_info['files_in_folder'] = os.listdir(upload_folder)
+    
+    debug_html = f"""
+    <h2>Profile Picture Debug Info</h2>
+    <pre style="background: #f4f4f4; padding: 15px; font-family: monospace;">
+{str(debug_info)}
+    </pre>
+    
+    <h3>User Database Info</h3>
+    <pre style="background: #f4f4f4; padding: 15px; font-family: monospace;">
+{str(users_db.get(user.email, {}))}
+    </pre>
+    
+    <a href="/profile">← Back to Profile</a>
+    """
+    
+    return debug_html
+
+# Enhanced Error Handlers
+@app.errorhandler(404)
+def page_not_found(e):
+    """Enhanced 404 error handler"""
+    return f'<h1>404 - Page Not Found</h1><p><a href="/dashboard">Go back to Dashboard</a></p>', 404
+
+@app.errorhandler(500)
+def internal_server_error(e):
+    """Enhanced 500 error handler"""
+    return f'<h1>500 - Internal Server Error</h1><p>Something went wrong. <a href="/dashboard">Go back to Dashboard</a></p>', 500
+
+@app.errorhandler(413)
+def file_too_large(e):
+    """Handle file upload size errors"""
+    flash('File too large. Please upload an image smaller than 16MB.', 'error')
+    return redirect(url_for('edit_profile'))
+
+# Main execution with enhanced configuration
 if __name__ == '__main__':
-    app.run(debug=True, host='0.0.0.0', port=5000)
+    print("\n" + "="*60)
+    print("🚗 LIFTLINK : CARPOOL - PROFILE PICTURE FIX EDITION")
+    print("="*60)
+    print("📍 Local URL: http://127.0.0.1:5000")
+    print("📍 Network URL: http://localhost:5000")
+    print("🎯 Xavier's Institute of Engineering")
+    print("🌟 Sustainable Commute Hub - Profile Picture Support")
+    print("="*60)
+    print("✅ Features Available:")
+    print("   - 🔐 User Registration & Secure Login")
+    print("   - 🔍 Enhanced Find & Search Rides")
+    print("   - ➕ Create New Rides with Validation")
+    print("   - 🚗 My Rides Management")
+    print("   - 👤 Complete Profile Management")
+    print("   - 📸 FIXED Profile Picture Upload & Display")
+    print("   - 🔧 Debug Tools for Profile Pictures")
+    print("   - 📱 Mobile Responsive Design")
+    print("   - 🧠 Smart Route Matching")
+    print(f"   - 📊 Sample Routes: {len(sample_rides)} rides loaded")
+    print(f"   - 👥 Test Users: {len(users_db)} users available")
+    print("="*60)
+    print("🔑 Test Login Credentials:")
+    print("   📧 Email: test@student.xavier.ac.in")
+    print("   🔒 Password: password123")
+    print("="*60)
+    print("🔧 Debug URLs:")
+    print("   📊 Profile Debug: http://127.0.0.1:5000/debug_profile")
+    print("="*60)
+    print(f"📁 Upload Folder: {UPLOAD_FOLDER}")
+    print(f"📁 Upload Folder Exists: {os.path.exists(UPLOAD_FOLDER)}")
+    print(f"🖼️ PIL Available: {PIL_AVAILABLE}")
+    print("="*60)
+    
+    # Enhanced Spyder detection and compatibility
+    spyder_detected = False
+    if 'runfile' in dir() or 'get_ipython' in globals():
+        spyder_detected = True
+        print("🔬 Detected Spyder/IPython - Using compatible mode")
+    
+    try:
+        if spyder_detected:
+            # Spyder-optimized configuration
+            app.run(
+                host='127.0.0.1',
+                port=5000,
+                debug=False,
+                use_reloader=False,
+                threaded=True
+            )
+        else:
+            # Standard configuration for command line
+            app.run(
+                host='0.0.0.0',
+                port=5000,
+                debug=True,
+                use_reloader=True,
+                threaded=True
+            )
+    except Exception as e:
+        print(f"❌ Server startup error: {e}")
+        print("💡 Fallback mode activated...")
+        try:
+            app.run(
+                host='127.0.0.1',
+                port=5000,
+                debug=False,
+                use_reloader=False,
+                threaded=True
+            )
+        except Exception as fallback_error:
+            print(f"❌ Fallback failed: {fallback_error}")
+            print("💡 Manual startup required:")
+            print("   1. Open Command Prompt")
+            print("   2. cd to your project folder")
+            print("   3. python main.py")
