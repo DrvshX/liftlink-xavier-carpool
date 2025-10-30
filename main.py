@@ -6,20 +6,20 @@ from datetime import datetime, timedelta
 import secrets
 import string
 from flask_mail import Mail, Message
-from captcha.image import ImageCaptcha
-import io
-import base64
+# from captcha.image import ImageCaptcha  # COMMENTED OUT FOR DEPLOYMENT
+# import io  # COMMENTED OUT FOR DEPLOYMENT
+# import base64  # COMMENTED OUT FOR DEPLOYMENT
 
 app = Flask(__name__)
-app.secret_key = 'your_secret_key_here_change_this'
+app.secret_key = os.environ.get('SECRET_KEY', 'your_secret_key_here_change_this')
 
 # Email Configuration
 app.config['MAIL_SERVER'] = 'smtp.gmail.com'
 app.config['MAIL_PORT'] = 587
 app.config['MAIL_USE_TLS'] = True
-app.config['MAIL_USERNAME'] = 'your_email@gmail.com'  # Replace with your Gmail
-app.config['MAIL_PASSWORD'] = 'your_app_password'     # Replace with your App Password
-app.config['MAIL_DEFAULT_SENDER'] = 'your_email@gmail.com'
+app.config['MAIL_USERNAME'] = os.environ.get('MAIL_USERNAME', 'your_email@gmail.com')
+app.config['MAIL_PASSWORD'] = os.environ.get('MAIL_PASSWORD', 'your_app_password')
+app.config['MAIL_DEFAULT_SENDER'] = os.environ.get('MAIL_USERNAME', 'your_email@gmail.com')
 
 mail = Mail(app)
 
@@ -56,17 +56,18 @@ def hash_password(password):
 def generate_token():
     return ''.join(secrets.choice(string.ascii_letters + string.digits) for _ in range(32))
 
-def generate_captcha():
-    image = ImageCaptcha(width=200, height=80)
-    captcha_text = ''.join(secrets.choice(string.ascii_uppercase + string.digits) for _ in range(5))
-    captcha_image = image.generate(captcha_text)
-    
-    # Convert to base64
-    img_buffer = io.BytesIO()
-    captcha_image.save(img_buffer, format='PNG')
-    img_data = base64.b64encode(img_buffer.getvalue()).decode()
-    
-    return captcha_text, f"data:image/png;base64,{img_data}"
+# CAPTCHA FUNCTION COMMENTED OUT FOR DEPLOYMENT
+# def generate_captcha():
+#     image = ImageCaptcha(width=200, height=80)
+#     captcha_text = ''.join(secrets.choice(string.ascii_uppercase + string.digits) for _ in range(5))
+#     captcha_image = image.generate(captcha_text)
+#     
+#     # Convert to base64
+#     img_buffer = io.BytesIO()
+#     captcha_image.save(img_buffer, format='PNG')
+#     img_data = base64.b64encode(img_buffer.getvalue()).decode()
+#     
+#     return captcha_text, f"data:image/png;base64,{img_data}"
 
 def send_verification_email(email, token, name):
     verification_url = url_for('verify_email', token=token, _external=True)
@@ -149,15 +150,15 @@ def login():
     if request.method == 'POST':
         email = request.form.get('email', '').lower().strip()
         password = request.form.get('password', '')
-        captcha_input = request.form.get('captcha', '').upper()
+        # captcha_input = request.form.get('captcha', '').upper()  # COMMENTED OUT FOR DEPLOYMENT
         
-        # Verify CAPTCHA
-        if 'captcha_text' not in session or captcha_input != session['captcha_text']:
-            flash('❌ Invalid CAPTCHA! Please try again.', 'error')
-            return render_template('login.html')
-        
-        # Remove used CAPTCHA
-        session.pop('captcha_text', None)
+        # CAPTCHA VERIFICATION COMMENTED OUT FOR DEPLOYMENT
+        # if 'captcha_text' not in session or captcha_input != session['captcha_text']:
+        #     flash('❌ Invalid CAPTCHA! Please try again.', 'error')
+        #     return render_template('login.html')
+        # 
+        # # Remove used CAPTCHA
+        # session.pop('captcha_text', None)
         
         if not email or not password:
             flash('❌ Please fill in all fields!', 'error')
@@ -298,11 +299,12 @@ def verify_email(token):
     flash('✅ Email verified successfully! You can now login to LiftLink.', 'success')
     return redirect(url_for('login'))
 
-@app.route('/captcha')
-def captcha():
-    captcha_text, captcha_image = generate_captcha()
-    session['captcha_text'] = captcha_text
-    return jsonify({'image': captcha_image})
+# CAPTCHA ROUTE COMMENTED OUT FOR DEPLOYMENT
+# @app.route('/captcha')
+# def captcha():
+#     captcha_text, captcha_image = generate_captcha()
+#     session['captcha_text'] = captcha_text
+#     return jsonify({'image': captcha_image})
 
 @app.route('/dashboard')
 def dashboard():
