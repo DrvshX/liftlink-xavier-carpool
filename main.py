@@ -1,6 +1,6 @@
-# LiftLink Carpool - Enhanced Flask Web Application with WhatsApp, Maps & Earnings History
+# LiftLink Carpool - Enhanced Flask Web Application with One Booking Per User + Emergency Contacts
 # Spyder Compatible - Xavier's Institute of Engineering - Sustainable Commute Hub
-# Version 9.0 - Advanced Communication & Earnings Features
+# Version 10.0 - One Booking Per User, Emergency Contacts, Enhanced Communication
 
 import os
 import sys
@@ -27,7 +27,7 @@ os.chdir(script_dir)
 
 # Debug info
 print("=" * 60)
-print(" LIFTLINK CARPOOL - ENHANCED VERSION 9.0")
+print(" LIFTLINK CARPOOL - ENHANCED VERSION 10.0")
 print("=" * 60)
 print(f"Current directory: {os.getcwd()}")
 print(f"Templates exist: {os.path.exists('templates')}")
@@ -43,7 +43,7 @@ print("=" * 60)
 
 # Initialize Flask app
 app = Flask(__name__)
-app.secret_key = 'xie-liftlink-secretkey-2025-enhanced-v9'
+app.secret_key = 'xie-liftlink-secretkey-2025-enhanced-v10'
 
 # Profile Picture Configuration
 UPLOAD_FOLDER = 'static/uploads/profilepics'
@@ -220,6 +220,8 @@ def get_default_users():
             'email': 'test@student.xavier.ac.in',
             'password': hashlib.sha256('password123'.encode()).hexdigest(),
             'phone': '7700090035',
+            'emergency_contact_name': 'Rajesh Bedre',
+            'emergency_contact_phone': '9876543210',
             'student_id': '2023032002',
             'department': 'Electronics & Telecommunication Engg',
             'year': 4,
@@ -235,6 +237,8 @@ def get_default_users():
             'email': 'john.doe@xavier.ac.in',
             'password': hashlib.sha256('staff123'.encode()).hexdigest(),
             'phone': '9876543210',
+            'emergency_contact_name': 'Jane Doe',
+            'emergency_contact_phone': '9876543211',
             'employee_id': 'XIE001',
             'department': 'Computer Science Engg',
             'designation': 'Assistant Professor',
@@ -278,7 +282,7 @@ bookings_db = load_bookings_db()
 earnings_db = load_earnings_db()
 
 class User:
-    """Enhanced User class with staff support"""
+    """Enhanced User class with emergency contacts"""
     def __init__(self, email):
         self.email = email
         self.data = users_db.get(email, {})
@@ -292,6 +296,14 @@ class User:
     @property
     def phone(self):
         return self.data.get('phone', '')
+
+    @property
+    def emergency_contact_name(self):
+        return self.data.get('emergency_contact_name', '')
+
+    @property
+    def emergency_contact_phone(self):
+        return self.data.get('emergency_contact_phone', '')
 
     @property
     def student_id(self):
@@ -367,6 +379,23 @@ def login_required(f):
         return f(*args, **kwargs)
     return decorated_function
 
+# Enhanced Booking Helper Functions
+def check_user_booking_status(user_email, ride_id):
+    """Check if user has already booked this ride"""
+    user_bookings = [booking for booking in bookings_db if 
+                    booking['passenger_email'] == user_email and 
+                    booking['ride_id'] == ride_id and 
+                    booking['status'] == 'confirmed']
+    return len(user_bookings) > 0
+
+def get_user_booking_for_ride(user_email, ride_id):
+    """Get user's booking for a specific ride"""
+    user_booking = next((booking for booking in bookings_db if 
+                        booking['passenger_email'] == user_email and 
+                        booking['ride_id'] == ride_id and 
+                        booking['status'] == 'confirmed'), None)
+    return user_booking
+
 # Communication Helper Functions
 def generate_whatsapp_url(phone, message):
     """Generate WhatsApp URL with pre-filled message"""
@@ -425,19 +454,21 @@ def index():
 
 @app.route('/register', methods=['GET', 'POST'])
 def register():
-    """Enhanced user registration with staff support and persistent storage"""
+    """Enhanced user registration with emergency contacts"""
     if request.method == 'POST':
         name = request.form.get('name', '').strip()
         email = request.form.get('email', '').strip().lower()
         phone = request.form.get('phone', '').strip()
+        emergency_name = request.form.get('emergency_contact_name', '').strip()
+        emergency_phone = request.form.get('emergency_contact_phone', '').strip()
         id_number = request.form.get('id_number', '').strip()  # Student ID or Employee ID
         password = request.form.get('password', '')
         confirm_password = request.form.get('confirm_password', '')
         user_type = request.form.get('user_type', 'student')
         
         # Enhanced validation
-        if not all([name, email, phone, id_number, password]):
-            flash('All fields are required.', 'error')
+        if not all([name, email, phone, emergency_name, emergency_phone, id_number, password]):
+            flash('All fields including emergency contact are required.', 'error')
             return render_template('register.html')
         
         # Email validation based on user type
@@ -465,12 +496,18 @@ def register():
             flash('Please enter a valid phone number.', 'error')
             return render_template('register.html')
         
+        if len(emergency_phone) < 10:
+            flash('Please enter a valid emergency contact phone number.', 'error')
+            return render_template('register.html')
+        
         # Create user account based on type
         user_data = {
             'name': name,
             'email': email,
             'password': hashlib.sha256(password.encode()).hexdigest(),
             'phone': phone,
+            'emergency_contact_name': emergency_name,
+            'emergency_contact_phone': emergency_phone,
             'department': '',
             'about': '',
             'profile_pic': None,
@@ -589,13 +626,15 @@ def profile():
 @app.route('/edit_profile', methods=['GET', 'POST'])
 @login_required
 def edit_profile():
-    """Enhanced profile editing with car details for staff and persistent storage"""
+    """Enhanced profile editing with emergency contacts"""
     user = User(session['user_email'])
     
     if request.method == 'POST':
         # Common fields
         name = request.form.get('name', '').strip()
         phone = request.form.get('phone', '').strip()
+        emergency_name = request.form.get('emergency_contact_name', '').strip()
+        emergency_phone = request.form.get('emergency_contact_phone', '').strip()
         department = request.form.get('department', '').strip()
         about = request.form.get('about', '').strip()
         
@@ -621,6 +660,8 @@ def edit_profile():
         users_db[user.email].update({
             'name': name or user.name,
             'phone': phone or user.phone,
+            'emergency_contact_name': emergency_name or user.emergency_contact_name,
+            'emergency_contact_phone': emergency_phone or user.emergency_contact_phone,
             'department': department or user.department,
             'about': about or user.about
         })
@@ -647,13 +688,13 @@ def edit_profile():
 @app.route('/find_ride', methods=['GET'])
 @login_required
 def find_ride():
-    """Enhanced find ride that shows ALL rides from OTHER users"""
+    """Enhanced find ride with booking status checking"""
     user = User(session['user_email'])
     search_from = request.args.get('from', '').strip()
     search_to = request.args.get('to', '').strip()
     search_date = request.args.get('date', '').strip()
     
-    # Start with ALL rides (this is the key fix)
+    # Start with ALL rides
     rides = sample_rides.copy()
     
     print(f"🔍 SEARCH DEBUG:")
@@ -682,10 +723,21 @@ def find_ride():
     rides = [r for r in rides if r['driver_email'] != user.email]
     print(f"👥 After removing own rides: {len(rides)} rides")
     
-    # Add communication URLs to each ride
+    # Add communication URLs and booking status to each ride
     for ride in rides:
+        # Check if current user has already booked this ride
+        user_has_booked = check_user_booking_status(user.email, ride['id'])
+        user_booking = get_user_booking_for_ride(user.email, ride['id'])
+        
+        ride['user_has_booked'] = user_has_booked
+        ride['user_booking'] = user_booking
+        
         # WhatsApp message
-        whatsapp_message = f"Hi {ride['driver_name']}, I'm interested in your ride from {ride['from_location']} to {ride['to_location']} on {ride['date']} at {ride['departure_time']}. Can we coordinate for pickup?"
+        if user_has_booked:
+            whatsapp_message = f"Hi {ride['driver_name']}, this is {user.name}. I have already booked your ride from {ride['from_location']} to {ride['to_location']} on {ride['date']} at {ride['departure_time']}. Please let me know the pickup details."
+        else:
+            whatsapp_message = f"Hi {ride['driver_name']}, I'm interested in your ride from {ride['from_location']} to {ride['to_location']} on {ride['date']} at {ride['departure_time']}. Can we coordinate for pickup?"
+        
         ride['whatsapp_url'] = generate_whatsapp_url(ride['phone'], whatsapp_message)
         
         # Maps URL for route
@@ -697,7 +749,8 @@ def find_ride():
     # Debug: Print all rides for troubleshooting
     print(f"🚗 Final rides to display:")
     for i, ride in enumerate(rides, 1):
-        print(f"   {i}. {ride['driver_name']}: {ride['from_location']} → {ride['to_location']} ({ride['driver_email']})")
+        booked_status = "BOOKED" if ride.get('user_has_booked', False) else "AVAILABLE"
+        print(f"   {i}. {ride['driver_name']}: {ride['from_location']} → {ride['to_location']} ({booked_status})")
     
     # Sort rides by date and time
     rides.sort(key=lambda x: (x['date'], x['departure_time']))
@@ -858,7 +911,7 @@ def edit_ride(ride_id):
 @app.route('/book_ride/<int:ride_id>')
 @login_required
 def book_ride(ride_id):
-    """Enhanced ride booking with WhatsApp, Maps, Call integration and earnings tracking"""
+    """Enhanced ride booking with one booking per user restriction"""
     user = User(session['user_email'])
     
     # Find the ride
@@ -874,6 +927,11 @@ def book_ride(ride_id):
     
     if ride['driver_email'] == user.email:
         flash('You cannot book your own ride.', 'error')
+        return redirect(url_for('find_ride'))
+    
+    # Check if user has already booked this ride
+    if check_user_booking_status(user.email, ride_id):
+        flash('You have already booked this ride. You can only book one seat per ride.', 'error')
         return redirect(url_for('find_ride'))
     
     # Book the ride (decrease available seats)
@@ -947,6 +1005,7 @@ def book_ride(ride_id):
         </div>
         <p style="margin-top: 2rem; color: #666;">
             <strong>Phone:</strong> {ride['phone']}<br>
+            <strong>Note:</strong> You can only book one seat per ride.<br>
             Have a safe journey! 🚗
         </p>
     </div>
@@ -1044,21 +1103,20 @@ def internal_error(error):
 
 if __name__ == '__main__':
     print("=" * 60)
-    print(" LIFTLINK CARPOOL - ENHANCED VERSION 9.0")
+    print(" LIFTLINK CARPOOL - ENHANCED VERSION 10.0")
     print("=" * 60)
     print("Local URL: http://127.0.0.1:5000")
     print("Network URL: http://localhost:5000")
     print("Xavier's Institute of Engineering")
-    print("Sustainable Commute Hub - ADVANCED COMMUNICATION FEATURES!")
+    print("Sustainable Commute Hub - ONE BOOKING PER USER + EMERGENCY CONTACTS!")
     print("=" * 60)
     print("✅ ENHANCED FEATURES:")
-    print("- 🔒 PERSISTENT USER REGISTRATION")
-    print("- 💾 FILE-BASED STORAGE (Users, Rides, Bookings, Earnings)")
-    print("- 📱 WHATSAPP INTEGRATION - Send messages to drivers")
-    print("- 📞 DIRECT CALL FUNCTIONALITY")
+    print("- 🔒 ONE BOOKING PER USER PER RIDE")
+    print("- 🚨 EMERGENCY CONTACT REGISTRATION")
+    print("- 📱 ENHANCED WHATSAPP + CALL INTEGRATION")
     print("- 🗺️ GOOGLE MAPS ROUTE INTEGRATION")
     print("- 💰 DETAILED EARNINGS HISTORY")
-    print("- 🎫 ENHANCED BOOKING SYSTEM")
+    print("- 🎫 SMART BOOKING STATUS TRACKING")
     print("- 👥 PROPER RIDE SHARING")
     print("- 🔍 SMART SEARCH & FILTERING")
     print("- 📊 COMPREHENSIVE ANALYTICS")
@@ -1080,11 +1138,11 @@ if __name__ == '__main__':
     print(f"- Earnings: {EARNINGS_DB_FILE}")
     print("=" * 60)
     print("🎉 NEW FEATURES ADDED:")
-    print("✅ WhatsApp integration with pre-filled messages")
-    print("✅ Direct call functionality")
-    print("✅ Google Maps route viewing")
-    print("✅ Detailed earnings history per passenger")
-    print("✅ Enhanced booking confirmation with all contact options")
+    print("✅ One booking per user per ride restriction")
+    print("✅ Emergency contact during registration")
+    print("✅ Enhanced booking status tracking")
+    print("✅ Smart contact options based on booking status")
+    print("✅ Improved booking confirmation messages")
     print("=" * 60)
     
     app.run(host='0.0.0.0', port=5000, debug=True, use_reloader=True, threaded=True)
